@@ -6,4 +6,6 @@ This includes:
     - Registration
     - Forgot Password (Request)
     - Reset Password
+
+    Will interface with the intern_service module to handle intern related stuff.
 """
