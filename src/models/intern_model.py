@@ -3,7 +3,7 @@ from sqlalchemy import Table, Column, Integer, String, Float
 from src.db import metadata, engine
 
 intern_table = Table(
-    "intern_table",
+    "intern",
     metadata,
     Column("id", Integer, primary_key=True),
     Column("first_name", String),
