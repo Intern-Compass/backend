@@ -1,0 +1,1 @@
+from .intern_model import User

@@ -5,6 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.16.5",
+    "argon2-cffi>=25.1.0",
     "fastapi>=0.116.1",
+    "pydantic-settings>=2.10.1",
+    "python-jose>=3.5.0",
     "sqlalchemy>=2.0.43",
 ]
