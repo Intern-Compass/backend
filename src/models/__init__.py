@@ -1,1 +1,1 @@
-from .intern_model import User
+from .app_models import User

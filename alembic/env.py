@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.models.intern_model import (
+from src.models.app_models import (
     Intern,
     InternTask,
     InternSkill,

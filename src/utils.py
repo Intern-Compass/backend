@@ -26,3 +26,6 @@ def password_is_correct(user_password: str, supplied_password: str) -> bool:
     except argon2.exceptions.VerifyMismatchError as e:
         logger.error(f"Invalid Password: {e}")
     return False
+
+def hash_password(password: str) -> str:
+    return ph.hash(password)

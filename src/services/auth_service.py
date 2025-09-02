@@ -7,7 +7,7 @@ from starlette.requests import Request
 
 from src.logger import logger
 from src.repositories.user_repo import UserRepository
-from src.models.intern_model import User
+from src.models.app_models import User
 from src.db import get_db_session
 from src.schemas.user_schemas import UserOutModel
 from src.utils import generate_access_token, password_is_correct
