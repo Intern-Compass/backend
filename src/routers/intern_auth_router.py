@@ -31,7 +31,7 @@ async def login(
         auth_service: Annotated[AuthService, Depends()],
         request: Request
 ):
-    """ Logs the user in and returns access and refresh tokens"""
+    """ Logs the intern in and returns access and refresh tokens"""
     return await auth_service.login(
         username=form.username,
         password=form.password,

@@ -7,6 +7,7 @@ from src.schemas import UserInModel, UserOutModel
 from src.services.general_user_service import GeneralUserService
 
 router: APIRouter = APIRouter(tags=["GeneralUserRouter"])
+"""Router concerns everything that is common to all users of the application. Add any common app endpoints here"""
 
 @router.post("/user")
 async def create_user(
