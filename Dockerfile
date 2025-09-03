@@ -15,8 +15,6 @@ COPY . .
 # Expose FastAPI port
 EXPOSE 8000
 
-# Set environment variable for templates
-#ENV TEMPLATE_DIR=/app/src/templates
 
 # Start the app using uv and uvicorn
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
