@@ -1,8 +1,8 @@
-"""init db
+"""init
 
-Revision ID: 008d6d109a43
+Revision ID: 25cf391c421a
 Revises: 
-Create Date: 2025-08-31 23:13:29.363355
+Create Date: 2025-09-02 22:57:23.271849
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '008d6d109a43'
+revision: str = '25cf391c421a'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,15 +31,15 @@ def upgrade() -> None:
     op.create_table('user',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
-    sa.Column('password_hash', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('password', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
     op.create_table('administrator',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -47,7 +47,7 @@ def upgrade() -> None:
     )
     op.create_table('intern',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('division_id', sa.UUID(), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('bio', sa.Text(), nullable=True),
@@ -60,16 +60,16 @@ def upgrade() -> None:
     )
     op.create_table('skill',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('created_by_user_id', sa.UUID(), nullable=True),
+    sa.Column('created_by_user_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['created_by_user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
     op.create_table('supervisor',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('division_id', sa.UUID(), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('position', sa.String(), nullable=True),
@@ -79,11 +79,12 @@ def upgrade() -> None:
     sa.UniqueConstraint('user_id')
     )
     op.create_table('intern_skill',
-    sa.Column('intern_id', sa.UUID(), nullable=True),
-    sa.Column('skill_id', sa.UUID(), nullable=True),
+    sa.Column('intern_id', sa.UUID(), nullable=False),
+    sa.Column('skill_id', sa.UUID(), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['intern_id'], ['intern.id'], ),
-    sa.ForeignKeyConstraint(['skill_id'], ['skill.id'], )
+    sa.ForeignKeyConstraint(['skill_id'], ['skill.id'], ),
+    sa.PrimaryKeyConstraint('intern_id', 'skill_id')
     )
     op.create_index('ix_intern_skill_unique', 'intern_skill', ['intern_id', 'skill_id'], unique=True)
     op.create_table('project',
@@ -92,22 +93,23 @@ def upgrade() -> None:
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('supervisor_id', sa.UUID(), nullable=True),
     sa.Column('division_id', sa.UUID(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['division_id'], ['division.id'], ),
     sa.ForeignKeyConstraint(['supervisor_id'], ['supervisor.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('supervisor_skill',
-    sa.Column('supervisor_id', sa.UUID(), nullable=True),
-    sa.Column('skill_id', sa.UUID(), nullable=True),
+    sa.Column('supervisor_id', sa.UUID(), nullable=False),
+    sa.Column('skill_id', sa.UUID(), nullable=False),
     sa.Column('note', sa.Text(), nullable=True),
     sa.ForeignKeyConstraint(['skill_id'], ['skill.id'], ),
-    sa.ForeignKeyConstraint(['supervisor_id'], ['supervisor.id'], )
+    sa.ForeignKeyConstraint(['supervisor_id'], ['supervisor.id'], ),
+    sa.PrimaryKeyConstraint('supervisor_id', 'skill_id')
     )
     op.create_index('ix_supervisor_skill_unique', 'supervisor_skill', ['supervisor_id', 'skill_id'], unique=True)
     op.create_table('milestone',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=True),
+    sa.Column('project_id', sa.UUID(), nullable=False),
     sa.Column('title', sa.String(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('due_date', sa.Date(), nullable=True),
@@ -117,37 +119,39 @@ def upgrade() -> None:
     )
     op.create_table('task',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('project_id', sa.UUID(), nullable=True),
+    sa.Column('project_id', sa.UUID(), nullable=False),
     sa.Column('title', sa.String(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('due_date', sa.Date(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['project_id'], ['project.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('intern_task',
-    sa.Column('intern_id', sa.UUID(), nullable=True),
-    sa.Column('task_id', sa.UUID(), nullable=True),
-    sa.Column('assigned_at', sa.DateTime(), nullable=True),
+    sa.Column('intern_id', sa.UUID(), nullable=False),
+    sa.Column('task_id', sa.UUID(), nullable=False),
+    sa.Column('assigned_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['intern_id'], ['intern.id'], ),
-    sa.ForeignKeyConstraint(['task_id'], ['task.id'], )
+    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ),
+    sa.PrimaryKeyConstraint('intern_id', 'task_id')
     )
     op.create_index('ix_intern_task_unique', 'intern_task', ['intern_id', 'task_id'], unique=True)
     op.create_table('note',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('intern_id', sa.UUID(), nullable=True),
+    sa.Column('intern_id', sa.UUID(), nullable=False),
     sa.Column('task_id', sa.UUID(), nullable=True),
     sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['intern_id'], ['intern.id'], ),
     sa.ForeignKeyConstraint(['task_id'], ['task.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('task_skill',
-    sa.Column('task_id', sa.UUID(), nullable=True),
-    sa.Column('skill_id', sa.UUID(), nullable=True),
+    sa.Column('task_id', sa.UUID(), nullable=False),
+    sa.Column('skill_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['skill_id'], ['skill.id'], ),
-    sa.ForeignKeyConstraint(['task_id'], ['task.id'], )
+    sa.ForeignKeyConstraint(['task_id'], ['task.id'], ),
+    sa.PrimaryKeyConstraint('task_id', 'skill_id')
     )
     op.create_index('ix_task_skill_unique', 'task_skill', ['task_id', 'skill_id'], unique=True)
     # ### end Alembic commands ###

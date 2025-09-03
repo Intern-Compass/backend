@@ -21,11 +21,11 @@ from src.repositories import UserRepository
 from src.models import User
 from src.services import AuthService
 
-router = APIRouter(prefix="auth/", tags=["AuthRouter"])
+router = APIRouter(prefix="/auth", tags=["AuthRouter"])
 
 
 
-@router.post("token")
+@router.post("/token")
 async def login(
         form: Annotated[OAuth2PasswordRequestForm, Depends()],
         auth_service: Annotated[AuthService, Depends()],

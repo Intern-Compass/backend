@@ -27,31 +27,24 @@ class AuthService:
         if not existing_user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-
-        if not password_is_correct(existing_user.password_hash, password):
+        if not password_is_correct(existing_user.password, password):
             raise HTTPException(status_code=401, detail="Invalid login credentials")
 
         user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
-        try:
-            access_token: str = generate_access_token(user_to_login)
-            # new_refresh_token: str = await generate_refresh_token(
-            #     existing_user.email, self.token_repo
-            # )
-            # set_custom_cookie(
-            #     response=response,
-            #     key="refresh_token",
-            #     value=new_refresh_token,
-            #     path="/auth",
-            #     max_age=60 * 60 * 24 * 7,
-            # )
 
-            return {
-                "access_token": access_token,
-                "token_type": "Bearer",
-            }
+        access_token: str = generate_access_token(user_to_login)
+        # new_refresh_token: str = await generate_refresh_token(
+        #     existing_user.email, self.token_repo
+        # )
+        # set_custom_cookie(
+        #     response=response,
+        #     key="refresh_token",
+        #     value=new_refresh_token,
+        #     path="/auth",
+        #     max_age=60 * 60 * 24 * 7,
+        # )
 
-        except Exception as e:
-            logger.error(f"Error logging in user: {e}")
-            raise HTTPException(
-                status_code=500, detail="an error occurred while logging in the user"
-            )
+        return {
+            "access_token": access_token,
+            "token_type": "Bearer",
+        }

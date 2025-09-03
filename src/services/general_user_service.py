@@ -17,7 +17,6 @@ class GeneralUserService:
             session: Annotated[AsyncSession, Depends(get_db_session)],
             repo: Annotated[UserRepository, Depends()]
     ):
-
         self.session = session
         self.user_repo = repo
 
@@ -30,7 +29,7 @@ class GeneralUserService:
         if existing_user:
             raise HTTPException(status_code=400, detail="User already exists. Please log in")
 
-        new_user.password = hash_password(new_user.password) # Hash password before persisting into DB
+        new_user.password = hash_password(password=new_user.password)  # Hash password before persisting into DB
         created_user: User = await self.user_repo.create_new_user(conn=self.session, new_user=new_user)
 
-        return created_user
+        return UserOutModel.from_user(created_user)

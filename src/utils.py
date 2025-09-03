@@ -12,7 +12,11 @@ ph: PasswordHasher = PasswordHasher()
 def generate_access_token(
     user_to_login: UserOutModel,
 ) -> str:
-    payload: dict = user_to_login.model_dump()
+    payload: dict = {
+        "sub": user_to_login.id,
+        "email": user_to_login.email,
+        # "created_at": user_to_login.created_at # Not json serializable
+    }
 
     access_token: str = jwt.encode(
         claims=payload, key=settings.SECRET_KEY, algorithm=settings.ALGO

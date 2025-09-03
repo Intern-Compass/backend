@@ -3,7 +3,6 @@ from sqlalchemy import Select, select, Result, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.app_models import User
-from src.repositories.base_repo import BaseRepository
 from src.schemas import UserInModel
 
 
@@ -16,12 +15,18 @@ class UserRepository:
             self.table.email == email
         )
         result: Result = await conn.execute(stmt)
-        return result.fetchone()
+        return result.scalar_one_or_none()
 
     async def create_new_user(self, new_user: UserInModel, conn: AsyncSession):
-        stmt = insert(self.table).values(**new_user.model_dump()).returning(self.table)
-        result = await conn.execute(stmt)
-        return result.fetchone()
+        user: User = User(
+            email = new_user.email,
+            password = new_user.password
+        )
+        conn.add(user)
+        await conn.commit()
+        await conn.refresh(user)
+
+        return user
 
     async def get_by_id(self, conn: AsyncSession, id_value: str):
         stmt = select(self.table).where(self.table.id == id_value)

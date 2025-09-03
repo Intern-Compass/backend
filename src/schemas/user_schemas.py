@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 from src.models import User
@@ -8,6 +9,7 @@ class UserInModel(BaseModel):
     password: str
 
 class UserOutModel(BaseModel):
+    id: str
     email: str
     created_at: datetime
     updated_at: datetime
@@ -15,7 +17,8 @@ class UserOutModel(BaseModel):
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
         return UserOutModel(
-            email=user.c.email,
-            created_at=user.c.created_at,
-            updated_at=user.c.updated_at,
+            id=str(user.id),
+            email=user.email,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
         )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 from datetime import datetime, date
 from typing import Optional, List
@@ -18,20 +19,23 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("UTC")))
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=lambda: datetime.now(ZoneInfo("UTC")),
-        onupdate=lambda: datetime.now(ZoneInfo("UTC")),
+        default=lambda: datetime.now(),
+        onupdate=lambda: datetime.now(),
     )
 
     intern: Mapped[Optional[Intern]] = relationship("Intern", back_populates="user", uselist=False)
     supervisor: Mapped[Optional[Supervisor]] = relationship("Supervisor", back_populates="user", uselist=False)
     administrator: Mapped[Optional[Administrator]] = relationship("Administrator", back_populates="user", uselist=False)
     created_skills: Mapped[List[Skill]] = relationship("Skill", back_populates="creator")
+
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email})>"
 
 
 class Division(Base):
