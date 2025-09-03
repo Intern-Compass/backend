@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, Asyn
 
 from src.settings import settings
 
-metadata: MetaData = MetaData()
 engine: AsyncEngine = create_async_engine(url=settings.DB_URL, echo=False)
 
 SessionLocal = async_sessionmaker(bind=engine, autocommit=False, expire_on_commit=False)
