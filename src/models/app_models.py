@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+import uuid
 from zoneinfo import ZoneInfo
 from datetime import datetime, date
 from typing import Optional, List
@@ -96,7 +97,7 @@ class Administrator(Base):
 class Skill(Base):
     __tablename__ = "skill"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
     created_by_user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"))

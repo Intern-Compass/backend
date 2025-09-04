@@ -1,7 +1,9 @@
 from datetime import datetime
+from enum import Enum, unique
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from src.models import User
 
 class UserInModel(BaseModel):
@@ -22,3 +24,37 @@ class UserOutModel(BaseModel):
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
+
+
+@unique
+class UserAccountTypeEmun(str, Enum):
+    intern = "intern"
+    supervisor = "supervisor"
+    admin = "admin"
+
+
+SkilledUserLitral = Literal[UserAccountTypeEmun.supervisor.value, UserAccountTypeEmun.intern.value]
+
+# skill attach
+class SkillAttachReq(BaseModel):
+    id: UUID
+    note: str | None = None
+
+
+class SkillCreateReq(BaseModel):
+    name: str
+    description: str
+
+
+class SkillCreate(SkillCreateReq):
+    created_by_user_id: UUID
+
+
+class SkillRes(BaseModel):
+    id: UUID
+    name: str
+    description: str
+
+
+class SkillDetaildRes(SkillRes):
+    created_by_user_id: UUID

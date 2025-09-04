@@ -1,4 +1,7 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
+import uuid
+
+from sqlalchemy.exc import IntegrityError
 
 from fastapi import HTTPException
 from fastapi.params import Depends
@@ -8,8 +11,11 @@ from src.db import get_db_session
 from src.models import User
 from src.repositories import UserRepository
 from src.schemas import UserInModel, UserOutModel
+from src.schemas.user_schemas import SkillAttachReq, SkillCreate, SkillCreateReq, SkilledUserLitral, UserAccountTypeEmun
 from src.utils import hash_password
 
+INTERN_USER_TYPE = UserAccountTypeEmun.intern.value
+SUPERVISOR_USER_TYPE = UserAccountTypeEmun.supervisor.value
 
 class GeneralUserService:
     def __init__(
@@ -33,3 +39,33 @@ class GeneralUserService:
         created_user: User = await self.user_repo.create_new_user(conn=self.session, new_user=new_user)
 
         return UserOutModel.from_user(created_user)
+
+    async def add_skills_to_user(
+        self,
+        user_id: uuid.UUID,
+        user_type: SkilledUserLitral,
+        skills: list[SkillAttachReq]
+    ):
+        success = await self.user_repo.attach_skills_to_user(self.session, user_id, user_type, skills)
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to add skills")
+
+    async def get_skills(self, search_term: str | None = None):
+        return await self.user_repo.get_available_skills(self.session, search_term=search_term)
+
+    async def create_new_skill(
+        self,
+        skill_creator_user_id: uuid.UUID,
+        skill: SkillCreateReq
+    ):
+        skill = SkillCreate(
+            created_by_user_id=skill_creator_user_id,
+            **skill.model_dump()
+        )
+        try:
+            skill = await self.user_repo.add_new_skill(self.session, skill)
+        except IntegrityError:
+            raise HTTPException(status_code=400, detail="Skill already exists")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to create skill")
+        return skill
