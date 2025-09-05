@@ -49,6 +49,26 @@ async def send_email(
     attachments: list[Attachment] | None = None,
     **additional_context,
 ):
+    """
+    Send an email using a template.
+
+    The `context` parameter is a dataclass that should contain the variables
+    that are used in the template. The `subject` parameter is optional and if
+    not provided, the value of `context.__subject__` will be used.
+
+    The `importance` parameter is used to set the importance of the email.
+    It can be either "high", "normal" or "low".
+
+    The `attachments` parameter is a list of `Attachment` namedtuples.
+    The `filename` attribute is the filename of the attachment and the
+    `content` attribute is a `BytesIO` object with the content of the file.
+
+    :param recipients: The recipients of the email
+    :param context: The context of the email
+    :param subject: The subject of the email
+    :param importance: The importance of the email
+    :param attachments: The attachments of the email
+    """
     # Set the subject and render the template
     subject = subject or context.__subject__
     markup = (
