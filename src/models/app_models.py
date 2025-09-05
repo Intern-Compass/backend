@@ -20,6 +20,9 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    firstname: Mapped[str] = mapped_column(String(50))
+    lastname: Mapped[str] = mapped_column(String(50))
+    phone_number: Mapped[str] = mapped_column(String(15))
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now())
@@ -58,10 +61,12 @@ class Intern(Base):
     division_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("division.id"))
     name: Mapped[Optional[str]] = mapped_column(String)
     bio: Mapped[Optional[str]] = mapped_column(Text)
+    supervisor_id: Mapped[str] = mapped_column(ForeignKey("supervisor.id"), nullable=True)
     start_date: Mapped[Optional[date]] = mapped_column(Date)
     end_date: Mapped[Optional[date]] = mapped_column(Date)
 
     user: Mapped[User] = relationship("User", back_populates="intern")
+    supervisor: Mapped[Supervisor] = relationship("Supervisor", back_populates="interns")
     division: Mapped[Optional[Division]] = relationship("Division", back_populates="interns")
     skills: Mapped[List[Skill]] = relationship("Skill", secondary="intern_skill", back_populates="interns")
     tasks: Mapped[List[Task]] = relationship("Task", secondary="intern_task", back_populates="interns")
@@ -78,6 +83,7 @@ class Supervisor(Base):
     position: Mapped[Optional[str]] = mapped_column(String)
 
     user: Mapped[User] = relationship("User", back_populates="supervisor")
+    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="supervisor")
     division: Mapped[Optional[Division]] = relationship("Division", back_populates="supervisors")
     projects: Mapped[List[Project]] = relationship("Project", back_populates="supervisor")
     skills: Mapped[List[Skill]] = relationship("Skill", secondary="supervisor_skill", back_populates="supervisors")

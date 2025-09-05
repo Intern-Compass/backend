@@ -10,8 +10,8 @@ from typing import NamedTuple, Literal
 
 from pydantic import validate_call, ConfigDict
 
-from ...logger import logger
-from ...settings import settings
+from src.logger import logger
+from src.settings import settings
 
 
 @lru_cache
