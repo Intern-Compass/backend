@@ -5,3 +5,4 @@ internship_matching_platform.db
 .log
 logs/
 docker-compose.override.yml
+_scripts/

@@ -1,16 +1,12 @@
-x-services-template: &web-temp
-  build: .
-  volumes:
-    - .:/app
-  environment:
-    - PYTHONUNBUFFERED=1
+version: "3.9"
 
 services:
   web:
-    <<: *web-temp
+    build: .
     container_name: internship_matching_platform
     ports:
       - "8001:8000"
-  prestart:
-    <<: *web-temp
-    command: ["uv", "run", "sh", "scripts/prestart.sh"]
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
