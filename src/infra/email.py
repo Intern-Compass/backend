@@ -6,9 +6,9 @@ from aiosmtplib import send
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from io import BytesIO
-from typing import NamedTuple, Literal
+from typing import NamedTuple, Literal, Annotated
 
-from pydantic import validate_call, ConfigDict
+from pydantic import validate_call, ConfigDict, EmailStr
 
 from ..logger import logger
 from ..settings import settings
@@ -42,6 +42,7 @@ class EmailContext:
 
 @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
 async def send_email(
+    *recipients: Annotated[str, EmailStr],
     context: EmailContext,
     subject: str | None = None,
     importance: Literal["high", "normal", "low"] = "high",
@@ -83,7 +84,7 @@ async def send_email(
         await send(
             message,
             sender=settings.SMTP_USERNAME,
-            recipients=settings.SMTP_RECEPIENTS,
+            recipients=recipients,
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
             username=settings.SMTP_USERNAME,
