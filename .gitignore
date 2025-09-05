@@ -4,3 +4,5 @@ internship_matching_platform.db
 .env
 .log
 logs/
+docker-compose.override.yml
+_scripts/
