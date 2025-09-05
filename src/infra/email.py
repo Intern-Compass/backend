@@ -1,13 +1,11 @@
 from dataclasses import dataclass, asdict
 from email.message import EmailMessage
 from functools import lru_cache
-
-from aiosmtplib import send
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-
 from io import BytesIO
 from typing import NamedTuple, Literal, Annotated
 
+from aiosmtplib import send
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import validate_call, ConfigDict, EmailStr
 
 from ..logger import logger
