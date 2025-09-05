@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import EmailStr
+from typing import Annotated
 
 
 class Settings(BaseSettings):
@@ -6,6 +8,16 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str
     ALGO: str
+
+    # Email Settings
+    SMTP_SENDER_NAME: str
+    SMTP_SENDER_EMAIL: Annotated[str, EmailStr]
+    SMTP_USERNAME: str
+    SMTP_RECEPIENTS: list[Annotated[str, EmailStr]]
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
