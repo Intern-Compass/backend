@@ -9,7 +9,7 @@ from src.schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
 from src.services import AuthService
 
-router: APIRouter = APIRouter(prefix="/auth", tags=["GeneralUserRouter"])
+router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
 """Router concerns everything that has to do with authentication."""
 
 @router.post("/supervisor")
