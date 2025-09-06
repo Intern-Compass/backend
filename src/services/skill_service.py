@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db_session
 from src.repositories import SkillRepository
-from src.schemas.user_schemas import SkillAttachReq, SkillCreate, SkillCreateReq, SkilledUserLitral, UserAccountTypeEmun
+from src.schemas.skill_schemas import SkillAttachReq, SkillCreate, SkillCreateReq, SkilledUserLitral
+from src.schemas.user_schemas import UserAccountTypeEmun
 
 INTERN_USER_TYPE = UserAccountTypeEmun.intern.value
 SUPERVISOR_USER_TYPE = UserAccountTypeEmun.supervisor.value

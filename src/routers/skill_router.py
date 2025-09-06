@@ -4,10 +4,10 @@ import uuid
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from src.schemas.user_schemas import SkillCreateReq, SkillRes
+from src.schemas.skill_schemas import SkillCreateReq, SkillRes
 from src.services.skill_service import SkillService
 
-router: APIRouter = APIRouter(prefix="skills", tags=["Skills"])
+router: APIRouter = APIRouter(prefix="/skills", tags=["Skills"])
 """Router concerns everything that is common to all users of the application. Add any common app endpoints here"""
 
 @router.get("/skills")

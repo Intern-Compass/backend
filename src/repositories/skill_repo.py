@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.app_models import InternSkill, Skill, SupervisorSkill
-from src.schemas.user_schemas import SkillAttachReq, SkillCreate, SkilledUserLitral, UserAccountTypeEmun
+from src.schemas.user_schemas import UserAccountTypeEmun
+from src.schemas.skill_schemas import SkillAttachReq, SkillCreate, SkilledUserLitral
 from src.logger import logger
 
 
