@@ -1,0 +1,27 @@
+from pydantic import BaseModel
+
+from datetime import datetime, date
+from uuid import UUID
+from src.models.app_models import Task
+
+class TaskInModel(BaseModel):
+    title: str
+    description: str
+    due_date: date
+
+class TaskOutModel(BaseModel):
+    id: str
+    title: str
+    description: str
+    due_date: date
+    created_at: datetime    
+
+    @classmethod         
+    def from_model(task: Task) -> "TaskOutModel":
+        return TaskOutModel(
+            id=task.id,
+            title=task.title,
+            description=task.description,
+            due_date=task.due_date,
+            created_at=task.created_at                     
+        )
