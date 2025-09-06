@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from src.routers.general_user_router import router as general_user_router
+from src.routers.auth_router import router as general_user_router
 from src.routers.intern_auth_router import router as intern_router
 from src.logger import logger
 

@@ -1,11 +1,11 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: internship_matching_platform
     ports:
       - "8001:8000"
-    volumes:
-      - .:/app
     env_file:
       - .env
     environment:
