@@ -1,14 +1,12 @@
 from dataclasses import dataclass, asdict
 from email.message import EmailMessage
 from functools import lru_cache
+from io import BytesIO
+from typing import NamedTuple, Literal, Annotated
 
 from aiosmtplib import send
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-
-from io import BytesIO
-from typing import NamedTuple, Literal
-
-from pydantic import validate_call, ConfigDict
+from pydantic import validate_call, ConfigDict, EmailStr
 
 from ..logger import logger
 from ..settings import settings
@@ -42,12 +40,33 @@ class EmailContext:
 
 @validate_call(config=ConfigDict(arbitrary_types_allowed=True))
 async def send_email(
+    *recipients: Annotated[str, EmailStr],
     context: EmailContext,
     subject: str | None = None,
     importance: Literal["high", "normal", "low"] = "high",
     attachments: list[Attachment] | None = None,
     **additional_context,
 ):
+    """
+    Send an email using a template.
+
+    The `context` parameter is a dataclass that should contain the variables
+    that are used in the template. The `subject` parameter is optional and if
+    not provided, the value of `context.__subject__` will be used.
+
+    The `importance` parameter is used to set the importance of the email.
+    It can be either "high", "normal" or "low".
+
+    The `attachments` parameter is a list of `Attachment` namedtuples.
+    The `filename` attribute is the filename of the attachment and the
+    `content` attribute is a `BytesIO` object with the content of the file.
+
+    :param recipients: The recipients of the email
+    :param context: The context of the email
+    :param subject: The subject of the email
+    :param importance: The importance of the email
+    :param attachments: The attachments of the email
+    """
     # Set the subject and render the template
     subject = subject or context.__subject__
     markup = (
@@ -83,7 +102,7 @@ async def send_email(
         await send(
             message,
             sender=settings.SMTP_USERNAME,
-            recipients=settings.SMTP_RECEPIENTS,
+            recipients=recipients,
             hostname=settings.SMTP_HOST,
             port=settings.SMTP_PORT,
             username=settings.SMTP_USERNAME,
