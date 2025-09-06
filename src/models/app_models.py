@@ -34,7 +34,7 @@ class User(Base):
 
     __repr_attrs__ = ("id", "email", "firstname", "lastname", "phone_number", "verified")
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     firstname: Mapped[str] = mapped_column(String(50))
     lastname: Mapped[str] = mapped_column(String(50))
     phone_number: Mapped[str] = mapped_column(String(15))
@@ -59,7 +59,7 @@ class Division(Base):
     __tablename__ = "division"
 
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
 
@@ -71,7 +71,7 @@ class Division(Base):
 class Intern(Base):
     __tablename__ = "intern"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
@@ -100,7 +100,7 @@ class Intern(Base):
 class Supervisor(Base):
     __tablename__ = "supervisor"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
@@ -122,7 +122,7 @@ class Supervisor(Base):
 class Administrator(Base):
     __tablename__ = "administrator"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("user.id", ondelete="CASCADE", onupdate="CASCADE"),
@@ -135,7 +135,7 @@ class Administrator(Base):
 class Skill(Base):
     __tablename__ = "skill"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
     created_by_user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"))
@@ -159,7 +159,7 @@ class InternSkill(Base):
 class Project(Base):
     __tablename__ = "project"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     title: Mapped[Optional[str]] = mapped_column(String)
     description: Mapped[Optional[str]] = mapped_column(Text)
     supervisor_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("supervisor.id"))
@@ -175,7 +175,7 @@ class Project(Base):
 class Task(Base):
     __tablename__ = "task"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     project_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("project.id"))
     title: Mapped[Optional[str]] = mapped_column(String)
     description: Mapped[Optional[str]] = mapped_column(Text)
@@ -210,7 +210,7 @@ class InternTask(Base):
 class Milestone(Base):
     __tablename__ = "milestone"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     project_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("project.id"))
     title: Mapped[Optional[str]] = mapped_column(String)
     description: Mapped[Optional[str]] = mapped_column(Text)
@@ -223,7 +223,7 @@ class Milestone(Base):
 class Note(Base):
     __tablename__ = "note"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     intern_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("intern.id"))
     task_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("task.id"), nullable=True)
     content: Mapped[Optional[str]] = mapped_column(Text)
@@ -245,6 +245,6 @@ class SupervisorSkill(Base):
 class VerificationCode(Base):
     __tablename__ = "verification_code"
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"), unique=True, nullable=False)
     value: Mapped[str] = mapped_column(String(6), unique=True)
