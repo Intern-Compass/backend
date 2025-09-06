@@ -1,65 +1,21 @@
-import logging
-import uuid
+from uuid import UUID
 
-from sqlalchemy import Select, select, Result, insert, update, delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import InternSkill, Skill, SupervisorSkill, User
-from src.schemas import UserInModel
+from src.models.app_models import InternSkill, Skill, SupervisorSkill
 from src.schemas.user_schemas import SkillAttachReq, SkillCreate, SkilledUserLitral, UserAccountTypeEmun
+from src.logger import logger
 
 
-logger = logging.getLogger(__name__)
 
 
-class UserRepository:
+class SkillRepository:
     def __init__(self):
-        self.table = User
-
-    async def get_user_by_email(self, conn: AsyncSession, email: str):
-        stmt: Select = select(self.table).where(
-            self.table.email == email
-        )
-        result: Result = await conn.execute(stmt)
-        return result.scalar_one_or_none()
-
-    async def create_new_user(self, new_user: UserInModel, conn: AsyncSession):
-        user: User = User(
-            email = new_user.email,
-            password = new_user.password
-        )
-        conn.add(user)
-        await conn.commit()
-        await conn.refresh(user)
-
-        return user
-
-    async def get_by_id(self, conn: AsyncSession, id_value: str):
-        stmt = select(self.table).where(self.table.id == id_value)
-        result = await conn.execute(stmt)
-        return result.fetchone()
-
-    async def list_all(self, conn: AsyncSession):
-        stmt = select(self.table)
-        result = await conn.execute(stmt)
-        return result.fetchall()
-
-    async def update(self, conn: AsyncSession, id_value: str, values: dict):
-        stmt = (
-            update(self.table)
-            .where(self.table.id == id_value)
-            .values(**values)
-            .returning(self.table)
-        )
-        result = await conn.execute(stmt)
-        return result.fetchone()
-
-    async def delete(self, conn: AsyncSession, id_value: str) -> None:
-        stmt = delete(self.table).where(self.table.id == id_value)
-        await conn.execute(stmt)
+        self.table = Skill
 
     async def attach_skills_to_user(
-        self, conn: AsyncSession, user_id: uuid.UUID,
+        self, conn: AsyncSession, user_id: UUID,
         user_type: SkilledUserLitral, skill_data: list[SkillAttachReq]
     ):
         # NOTE: this doesn't check for duplicates
@@ -82,7 +38,7 @@ class UserRepository:
             raise ValueError(f"Invalid user type: {user_type}")
         conn.add_all(objs)
         try:
-            await conn.commit()
+            await conn.flush()
         except Exception as e:
             logger.error(f"Error attaching skills to intern: {e}")
             await conn.rollback()
@@ -94,7 +50,7 @@ class UserRepository:
     ):
         obj = Skill(**skill.model_dump())
         conn.add(obj)
-        await conn.commit()
+        await conn.flush()
         await conn.refresh(obj)
         return obj
 
@@ -102,7 +58,7 @@ class UserRepository:
         objs = [Skill(**skill.model_dump()) for skill in skills]
         conn.add_all(objs)
         try:
-            await conn.commit()
+            await conn.flush()
         except Exception as e:
             logger.error(f"Error adding new skills: {e}")
             await conn.rollback()

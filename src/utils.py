@@ -1,3 +1,5 @@
+import random
+
 import argon2
 from argon2 import PasswordHasher
 from jose import jwt
@@ -14,6 +16,9 @@ def generate_access_token(
 ) -> str:
     payload: dict = {
         "sub": user_to_login.id,
+        "firstname": user_to_login.firstname,
+        "lastname": user_to_login.lastname,
+        "phone_number": user_to_login.phone_number,
         "email": user_to_login.email,
         # "created_at": user_to_login.created_at # Not json serializable
     }
@@ -33,3 +38,6 @@ def password_is_correct(user_password: str, supplied_password: str) -> bool:
 
 def hash_password(password: str) -> str:
     return ph.hash(password)
+
+def generate_random_code() -> str:
+    return str(random.randint(100000, 999999))
