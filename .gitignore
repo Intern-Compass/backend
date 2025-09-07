@@ -2,5 +2,6 @@ __pycache__/
 .idea/
 internship_matching_platform.db
 .env
+.venv/
 .log
 logs/
