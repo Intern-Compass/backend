@@ -15,7 +15,7 @@ from ...settings import settings
 @lru_cache
 def _get_template_environment():
     return Environment(
-        loader=FileSystemLoader(settings.TEMPLATES_FOLDER),
+        loader=FileSystemLoader("./templates"),
         autoescape=select_autoescape(["html", "xml"]),
     )
 
