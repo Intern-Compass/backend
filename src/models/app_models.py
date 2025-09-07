@@ -10,8 +10,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
-    relationship, declarative_base, Mapped, mapped_column, DeclarativeBase
+    relationship, Mapped, mapped_column, DeclarativeBase
 )
+
 
 class ReprMixin:
     def __repr__(self) -> str:
@@ -26,8 +27,10 @@ class ReprMixin:
         values_str = ", ".join(values)
         return f"<{self.__class__.__name__}({values_str})>"
 
+
 class Base(DeclarativeBase, ReprMixin):
     pass
+
 
 class User(Base):
     __tablename__ = "user"
@@ -54,18 +57,14 @@ class User(Base):
     created_skills: Mapped[List[Skill]] = relationship("Skill", back_populates="creator")
 
 
+class UserSkill(Base):
+    __tablename__ = "user_skill"
 
-class Division(Base):
-    __tablename__ = "division"
+    user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user.id"), primary_key=True)
+    skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
+    note: Mapped[Optional[str]] = mapped_column(Text)
 
-
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    description: Mapped[Optional[str]] = mapped_column(Text)
-
-    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="division")
-    supervisors: Mapped[List[Supervisor]] = relationship("Supervisor", back_populates="division")
-    projects: Mapped[List[Project]] = relationship("Project", back_populates="division")
+    __table_args__ = (Index("ix_user_skill_unique", "user_id", "skill_id", unique=True),)
 
 
 class Intern(Base):
@@ -95,6 +94,16 @@ class Intern(Base):
     skills: Mapped[List[Skill]] = relationship("Skill", secondary="intern_skill", back_populates="interns")
     tasks: Mapped[List[Task]] = relationship("Task", secondary="intern_task", back_populates="interns")
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
+
+
+class InternTask(Base):
+    __tablename__ = "intern_task"
+
+    intern_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("intern.id"), primary_key=True)
+    task_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("task.id"), primary_key=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("UTC")))
+
+    __table_args__ = (Index("ix_intern_task_unique", "intern_id", "task_id", unique=True),)
 
 
 class Supervisor(Base):
@@ -132,6 +141,19 @@ class Administrator(Base):
     user: Mapped[User] = relationship("User", back_populates="administrator")
 
 
+class Division(Base):
+    __tablename__ = "division"
+
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+
+    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="division")
+    supervisors: Mapped[List[Supervisor]] = relationship("Supervisor", back_populates="division")
+    projects: Mapped[List[Project]] = relationship("Project", back_populates="division")
+
+
 class Skill(Base):
     __tablename__ = "skill"
 
@@ -144,16 +166,6 @@ class Skill(Base):
     interns: Mapped[List[Intern]] = relationship("Intern", secondary="intern_skill", back_populates="skills")
     tasks: Mapped[List[Task]] = relationship("Task", secondary="task_skill", back_populates="skills")
     supervisors: Mapped[List[Supervisor]] = relationship("Supervisor", secondary="supervisor_skill", back_populates="skills")
-
-
-class InternSkill(Base):
-    __tablename__ = "intern_skill"
-
-    intern_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("intern.id"), primary_key=True)
-    skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
-    note: Mapped[Optional[str]] = mapped_column(Text)
-
-    __table_args__ = (Index("ix_intern_skill_unique", "intern_id", "skill_id", unique=True),)
 
 
 class Project(Base):
@@ -172,6 +184,25 @@ class Project(Base):
     milestones: Mapped[List[Milestone]] = relationship("Milestone", back_populates="project")
 
 
+class ProjectIntern(Base):
+    __tablename__ = "project_intern"
+
+    intern_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("intern.id"), primary_key=True)
+    project_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("project.id"), primary_key=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("UTC")))
+
+    __table_args__ = (Index("ix_project_intern_unique", "intern_id", "project_id", unique=True),)
+
+
+class ProjectSkill(Base):
+    __tablename__ = "project_skill"
+
+    project_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("project.id"), primary_key=True)
+    skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
+
+    __table_args__ = (Index("ix_task_skill_unique", "task_id", "skill_id", unique=True),)
+
+
 class Task(Base):
     __tablename__ = "task"
 
@@ -186,25 +217,6 @@ class Task(Base):
     skills: Mapped[List[Skill]] = relationship("Skill", secondary="task_skill", back_populates="tasks")
     interns: Mapped[List[Intern]] = relationship("Intern", secondary="intern_task", back_populates="tasks")
     notes: Mapped[List[Note]] = relationship("Note", back_populates="task")
-
-
-class TaskSkill(Base):
-    __tablename__ = "task_skill"
-
-    task_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("task.id"), primary_key=True)
-    skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
-
-    __table_args__ = (Index("ix_task_skill_unique", "task_id", "skill_id", unique=True),)
-
-
-class InternTask(Base):
-    __tablename__ = "intern_task"
-
-    intern_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("intern.id"), primary_key=True)
-    task_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("task.id"), primary_key=True)
-    assigned_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(ZoneInfo("UTC")))
-
-    __table_args__ = (Index("ix_intern_task_unique", "intern_id", "task_id", unique=True),)
 
 
 class Milestone(Base):
@@ -232,15 +244,6 @@ class Note(Base):
     intern: Mapped[Intern] = relationship("Intern", back_populates="notes")
     task: Mapped[Optional[Task]] = relationship("Task", back_populates="notes")
 
-
-class SupervisorSkill(Base):
-    __tablename__ = "supervisor_skill"
-
-    supervisor_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("supervisor.id"), primary_key=True)
-    skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
-    note: Mapped[Optional[str]] = mapped_column(Text)
-
-    __table_args__ = (Index("ix_supervisor_skill_unique", "supervisor_id", "skill_id", unique=True),)
 
 class VerificationCode(Base):
     __tablename__ = "verification_code"

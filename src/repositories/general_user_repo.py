@@ -32,7 +32,7 @@ class UserRepository:
 
 
     async def create_new_user(self, new_user: UserInModel, conn: AsyncSession) -> User:
-        user: User = User(
+        user: User = self.table(
             firstname=new_user.firstname,
             lastname=new_user.lastname,
             phone_number=new_user.phone_number,

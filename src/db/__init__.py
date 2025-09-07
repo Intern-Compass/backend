@@ -1,4 +1,3 @@
-from sqlalchemy import MetaData, create_engine, Engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncEngine
 
 from src.settings import settings

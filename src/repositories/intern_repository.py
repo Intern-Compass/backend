@@ -1,6 +1,5 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import User
@@ -25,7 +24,7 @@ class InternRepository:
         conn.add(user)
         await conn.flush()
 
-        intern: Intern = Intern(
+        intern: Intern = self.table(
             user_id=user_id,
             division_name=new_intern.department,
             bio=new_intern.bio,

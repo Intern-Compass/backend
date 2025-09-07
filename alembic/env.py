@@ -7,11 +7,10 @@ from sqlalchemy import pool
 from src.models.app_models import (
     Intern,
     InternTask,
-    InternSkill,
-    TaskSkill,
+    ProjectSkill,
+    ProjectIntern,
     Skill,
     Task,
-    SupervisorSkill,
     Supervisor,
     User,
     Administrator,
@@ -19,7 +18,8 @@ from src.models.app_models import (
     Milestone,
     Note,
     Project,
-    Base
+    Base,
+    UserSkill,
 )
 
 from alembic import context
