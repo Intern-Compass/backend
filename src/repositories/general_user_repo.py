@@ -15,29 +15,25 @@ class UserRepository:
     async def get_user_by_email_or_phone(
         self,
         conn: AsyncSession,
-        email: str|None = None,
-        phone_number: str|None = None
+        email: str | None = None,
+        phone_number: str | None = None,
     ):
         if email is None and phone_number is None:
             raise ValueError("Either email or phone_number must be supplied.")
 
         stmt: Select = select(self.table).where(
-            or_(
-                self.table.email == email,
-                self.table.phone_number == phone_number
-            ),
+            or_(self.table.email == email, self.table.phone_number == phone_number),
         )
         result: Result = await conn.execute(stmt)
         return result.scalars().first()
-
 
     async def create_new_user(self, new_user: UserInModel, conn: AsyncSession) -> User:
         user: User = User(
             firstname=new_user.firstname,
             lastname=new_user.lastname,
             phone_number=new_user.phone_number,
-            email = new_user.email,
-            password = new_user.password
+            email=new_user.email,
+            password=new_user.password,
         )
         conn.add(user)
         await conn.flush()
@@ -45,7 +41,7 @@ class UserRepository:
 
         return user
 
-    async def get_by_id(self, conn: AsyncSession, id_value: str) -> User|None:
+    async def get_by_id(self, conn: AsyncSession, id_value: str) -> User | None:
         stmt = select(self.table).where(self.table.id == id_value)
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
@@ -55,7 +51,9 @@ class UserRepository:
         result = await conn.execute(stmt)
         return result.fetchall()
 
-    async def update(self, conn: AsyncSession, user_id: UUID, values: dict) -> User|None:
+    async def update(
+        self, conn: AsyncSession, user_id: UUID, values: dict
+    ) -> User | None:
         stmt: Update[User] = (
             update(self.table)
             .where(self.table.id == user_id)
