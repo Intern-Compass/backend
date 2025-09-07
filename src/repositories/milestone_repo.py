@@ -10,15 +10,14 @@ class MilestoneRepository:
 
     async def create_new_milestone(self, new_milestone: MilestoneInModel, conn: AsyncSession):
         milestone: Milestone = Milestone(
+            project_id=new_milestone.project_id,
             title=new_milestone.title,
             description=new_milestone.description,
-            due_date=milestone.due_date,
+            due_date=new_milestone.due_date,
             status=new_milestone.status
         )
-        conn.add(milestone)
-        await conn.commit()
+        conn.add(milestone)        
         await conn.refresh(milestone)
-
         return milestone
     
     async def get_milestone_by_id(self, conn: AsyncSession, id_value: str):
@@ -43,12 +42,10 @@ class MilestoneRepository:
             .values(**values)
             .returning(self.table)
         )
-        result = await conn.execute(stmt)
-        await conn.commit()  
+        result = await conn.execute(stmt)         
         return result.scalar_one_or_none()
 
     async def delete_milestone(self, conn: AsyncSession, id_value: str) -> None:
         stmt = delete(self.table).where(self.table.id == id_value)
-        await conn.execute(stmt)
-        await conn.commit()  
+        await conn.execute(stmt)          
 

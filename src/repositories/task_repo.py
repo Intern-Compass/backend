@@ -10,12 +10,12 @@ class TaskRepository:
 
     async def create_new_task(self, new_task: TaskInModel, conn: AsyncSession):
         task: Task = Task(
+            project_id=new_task.project_id,
             title=new_task.title,
             description=new_task.description,
             due_date=new_task.due_date            
         )
-        conn.add(task)
-        await conn.commit()
+        conn.add(task)        
         await conn.refresh(task)
         return task
     
@@ -46,12 +46,10 @@ class TaskRepository:
             .values(**values)
             .returning(self.table)
         )
-        result = await conn.execute(stmt)
-        await conn.commit()  
+        result = await conn.execute(stmt)          
         return result.scalar_one_or_none()
 
     async def delete_task(self, conn: AsyncSession, id_value: str) -> None:
         stmt = delete(self.table).where(self.table.id == id_value)
-        await conn.execute(stmt)
-        await conn.commit()  
+        await conn.execute(stmt)      
 

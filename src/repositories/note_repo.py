@@ -10,12 +10,12 @@ class NoteRepository:
 
     async def create_new_note(self, new_note: NoteInModel, conn: AsyncSession):
         note: Note = Note(
+            intern_id=new_note.intern_id,
+            task_id=new_note.task_id,
             content=new_note.content
         )
-        conn.add(note)
-        await conn.commit()
+        conn.add(note)        
         await conn.refresh(note)
-
         return note
     
     async def get_note_by_id(self, conn: AsyncSession, id_value: str):
@@ -45,12 +45,10 @@ class NoteRepository:
             .values(**values)
             .returning(self.table)
         )
-        result = await conn.execute(stmt)
-        await conn.commit()  
+        result = await conn.execute(stmt)         
         return result.scalar_one_or_none()
 
     async def delete_note(self, conn: AsyncSession, id_value: str) -> None:
         stmt = delete(self.table).where(self.table.id == id_value)
-        await conn.execute(stmt)
-        await conn.commit()  
+        await conn.execute(stmt)        
 

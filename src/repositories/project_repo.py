@@ -3,20 +3,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.app_models import Project, InternTask, Task
 from src.schemas.project_schemas import ProjectInModel
 from typing import Optional, List
+from uuid import uuid4
 
 class ProjectRepository:
     def __init__(self):
         self.table = Project
 
     async def create_new_project(self, new_project: ProjectInModel, conn: AsyncSession):
+        
         project: Project = Project(
             title=new_project.title,
-            description=new_project.description
+            description=new_project.description,
+            supervisor_id=new_project.supervisor_id,
+            division_id=new_project.division_id
         )
-        conn.add(project)
-        await conn.commit()
+        conn.add(project)        
         await conn.refresh(project)
-
         return project
     
     async def get_project_by_id(self, conn: AsyncSession, id_value: str):
@@ -52,11 +54,9 @@ class ProjectRepository:
             .values(**values)
             .returning(self.table)
         )
-        result = await conn.execute(stmt)
-        await conn.commit()  
+        result = await conn.execute(stmt)         
         return result.scalar_one_or_none()
 
     async def delete_project(self, conn: AsyncSession, id_value: str) -> None:
         stmt = delete(self.table).where(self.table.id == id_value)
         await conn.execute(stmt)
-        await conn.commit()  

@@ -7,11 +7,15 @@ from src.models.app_models import Project
 class ProjectInModel(BaseModel):
     title: str
     description: str
+    supervisor_id: str
+    division_id: str
 
 class ProjectOutModel(BaseModel):
     id: str
     title: str
     description: str
+    supervisor_id: str
+    division_id: str
     created_at: datetime    
 
     @classmethod         
@@ -20,5 +24,7 @@ class ProjectOutModel(BaseModel):
             id=str(project.id),
             title=project.title,
             description=project.description,
+            supervisor_id=project.supervisor_id,
+            division_id=project.division_id,
             created_at=project.created_at
         )
