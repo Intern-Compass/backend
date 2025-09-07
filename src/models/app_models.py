@@ -200,7 +200,7 @@ class ProjectSkill(Base):
     project_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("project.id"), primary_key=True)
     skill_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("skill.id"), primary_key=True)
 
-    __table_args__ = (Index("ix_task_skill_unique", "task_id", "skill_id", unique=True),)
+    __table_args__ = (Index("ix_project_skill_unique", "project_id", "skill_id", unique=True),)
 
 
 class Task(Base):
