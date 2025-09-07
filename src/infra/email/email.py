@@ -8,8 +8,8 @@ from aiosmtplib import send
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import validate_call, ConfigDict, EmailStr
 
-from ..logger import logger
-from ..settings import settings
+from ...logger import logger
+from ...settings import settings
 
 
 @lru_cache
