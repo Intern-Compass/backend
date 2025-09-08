@@ -13,6 +13,8 @@ from src.repositories.verification_code_repo import VerificationCodeRepository
 from src.schemas import UserInModel, InternInModel
 from src.schemas.user_schemas import UserOutModel
 from src.utils import generate_access_token, password_is_correct, hash_password, generate_random_code
+from ..infra.email.contexts import VerifyEmailContext, EmailVerifiedContext
+from ..infra.email import send_email
 
 
 class AuthService:
@@ -82,7 +84,14 @@ class AuthService:
 
         # At this point, transaction has committed successfully
         print(f"Code for {user_email}: {send_code}")
-        # TODO: Send email (use self.background_task here), use the unused ``send_code`` and ``user_email`` variables
+
+        # Send verification code to email
+        self.background_task.add_task(
+            send_email,
+            user_email,
+            context=VerifyEmailContext(send_code=send_code),
+        )
+
         return {"detail": "Verification code sent to email"}
 
 
@@ -100,11 +109,12 @@ class AuthService:
             await self.code_repo.delete_code(conn=self.session, value=code)
             access_token: str = generate_access_token(UserOutModel.from_user(verified_user))
 
-        #TODO: Send confirmation mail once user has been created (use self.background_task)
-        return {
-            "access_token": access_token,
-            "token_type": "Bearer"
-        }
+        # Send confirmation mail once user has been created.
+        self.background_task.add_task(
+            send_email,
+            verified_user.email,
+            context=EmailVerifiedContext(),
+        )
 
 
     async def login(self, username: str, password: str, res: Response):
