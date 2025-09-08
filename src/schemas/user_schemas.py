@@ -1,12 +1,11 @@
 from datetime import datetime
 from enum import Enum, unique
-from typing import Literal
-from uuid import UUID
 
 from pydantic import BaseModel
 
 from src.common import Department
 from src.models import User
+from src.schemas.skill_schemas import SkillCreate
 
 
 class UserInModel(BaseModel):
@@ -15,6 +14,7 @@ class UserInModel(BaseModel):
     phone_number: str
     email: str
     password: str
+    skills: list[SkillCreate]
     date_of_birth: datetime
     department: Department
     work_location: str

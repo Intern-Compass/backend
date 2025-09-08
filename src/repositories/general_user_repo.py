@@ -1,9 +1,10 @@
+from os import name
 from uuid import UUID
 
 from sqlalchemy import Select, select, Result, update, delete, or_, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import User
+from src.models.app_models import User, Skill
 from src.schemas import UserInModel
 
 
@@ -36,6 +37,8 @@ class UserRepository:
             email=new_user.email,
             password=new_user.password,
         )
+        user.skills = [Skill(name=skill.name) for skill in new_user.skills]
+
         conn.add(user)
         await conn.flush()
         await conn.refresh(user)

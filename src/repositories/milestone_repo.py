@@ -1,9 +1,11 @@
-from sqlalchemy import Select, select, Result, insert, update, delete
+import uuid
+
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models.app_models import Milestone
 from src.schemas.milestone_schemas import MilestoneInModel
-from typing import Optional, List
-import uuid
+
 
 class MilestoneRepository:
     def __init__(self):

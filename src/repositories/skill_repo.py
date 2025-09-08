@@ -1,74 +1,79 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, Select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.models.app_models import InternSkill, Skill, SupervisorSkill
-from src.schemas.user_schemas import UserAccountTypeEmun
-from src.schemas.skill_schemas import SkillAttachReq, SkillCreate, SkilledUserLitral
-from src.logger import logger
-
-
+from src.models import User
+from src.models.app_models import Skill
+from src.schemas.skill_schemas import SkillCreate
 
 
 class SkillRepository:
     def __init__(self):
         self.table = Skill
 
+
+    async def create_or_get_skill(self, conn: AsyncSession, skill_name: str):
+        stmt: Select = select(Skill).filter(Skill.name == skill_name)
+        result: Result[Skill] = await conn.execute(stmt)
+        existing_skill: Skill = result.scalars().first()
+
+        if existing_skill:
+            return existing_skill
+
+        new_skill: Skill = self.table(name=skill_name)
+
+        conn.add(new_skill)
+        await conn.flush()
+        await conn.refresh(new_skill)
+
+        return new_skill
+
+
     async def attach_skills_to_user(
-        self, conn: AsyncSession, user_id: UUID,
-        user_type: SkilledUserLitral, skill_data: list[SkillAttachReq]
+        self,
+        conn: AsyncSession,
+        user_id: UUID,
+        skills: list[SkillCreate]
     ):
-        # NOTE: this doesn't check for duplicates
-        # TODO: implement duplicate handling
-        if user_type == UserAccountTypeEmun.intern.value:
-            objs = [
-                InternSkill(
-                    intern_id=user_id,
-                    skill_id=skill.id, note=skill.note
-                ) for skill in skill_data
-            ]
-        elif user_type == UserAccountTypeEmun.supervisor.value:
-            objs = [
-                SupervisorSkill(
-                    supervisor_id=user_id,
-                    skill_id=skill.id, note=skill.note
-                ) for skill in skill_data
-            ]
-        else:
-            raise ValueError(f"Invalid user type: {user_type}")
-        conn.add_all(objs)
-        try:
-            await conn.flush()
-        except Exception as e:
-            logger.error(f"Error attaching skills to intern: {e}")
-            await conn.rollback()
-            return False
-        return True
+        skill_list = [
+            (await self.create_or_get_skill(conn=conn, skill_name=skill.name))
+            for skill in skills
+        ]
+
+        existing_user: User = (
+            await conn.execute(
+                select(User).where(User.id == user_id).options(selectinload(User.skills))
+            )
+        ).scalar_one_or_none()
+        existing_user.skills.extend(skill_list)
+
+        conn.add(existing_user)
+        await conn.flush()
+
+        return existing_user.skills
+
 
     async def add_new_skill(
         self, conn: AsyncSession, skill: SkillCreate
     ):
-        obj = Skill(**skill.model_dump())
-        conn.add(obj)
+        skill = self.table(name=skill.name)
+        conn.add(skill)
         await conn.flush()
-        await conn.refresh(obj)
-        return obj
+        await conn.refresh(skill)
+        return skill
 
     async def add_new_skills(self, conn: AsyncSession, skills: list[SkillCreate]):
-        objs = [Skill(**skill.model_dump()) for skill in skills]
-        conn.add_all(objs)
-        try:
-            await conn.flush()
-        except Exception as e:
-            logger.error(f"Error adding new skills: {e}")
-            await conn.rollback()
-            return False
-        return True
+        skill_list = [self.table(name=skill.name) for skill in skills]
+        conn.add_all(skill_list)
+        await conn.flush()
+
+        return skill_list
 
     # TODO: maybe add a caching layer
     async def get_available_skills(self, conn: AsyncSession, search_term: str | None = None):
-        stmt = select(Skill)
+        stmt = select(self.table)
         if search_term:
             stmt = stmt.where(
                 Skill.name.ilike(f"%{search_term}%")

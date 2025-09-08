@@ -1,8 +1,9 @@
+from datetime import date
+
 from pydantic import BaseModel
 
-from datetime import datetime, date
-from uuid import UUID
 from src.models.app_models import Milestone
+
 
 class MilestoneInModel(BaseModel):
     project_id: str
@@ -20,10 +21,10 @@ class MilestoneOutModel(BaseModel):
     status: str 
 
     @classmethod         
-    def from_model(milestone: Milestone) -> "MilestoneOutModel":
+    def from_model(cls, milestone: Milestone) -> "MilestoneOutModel":
         return MilestoneOutModel(
-            id=milestone.id,
-            project_id=milestone.project_id,
+            id=str(milestone.id),
+            project_id=str(milestone.project_id),
             title=milestone.title,
             description=milestone.description,
             due_date=milestone.due_date,

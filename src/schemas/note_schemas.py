@@ -1,9 +1,10 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 
-from datetime import datetime
-from uuid import UUID
 from src.models.app_models import Note
-from typing import Optional
+
 
 class NoteInModel(BaseModel):
     intern_id: str
@@ -18,11 +19,11 @@ class NoteOutModel(BaseModel):
     created_at: datetime    
 
     @classmethod         
-    def from_model(note: Note) -> "NoteOutModel":
+    def from_model(cls, note: Note) -> "NoteOutModel":
         return NoteOutModel(
             id=str(note.id),
             content=note.content,
-            intern_id=note.intern_id,
+            intern_id=str(note.intern_id),
             task_id=note.task_id,
             created_at=note.created_at
         )

@@ -1,9 +1,11 @@
-from sqlalchemy import Select, select, Result, insert, update, delete
+import uuid
+
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models.app_models import Task, InternTask
 from src.schemas.task_schemas import TaskInModel
-from typing import Optional, List
-import uuid
+
 
 class TaskRepository:
     def __init__(self):

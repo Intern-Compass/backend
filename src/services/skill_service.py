@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 import uuid
 
 from sqlalchemy.exc import IntegrityError
@@ -8,8 +8,9 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db_session
+from src.models.app_models import Skill
 from src.repositories import SkillRepository
-from src.schemas.skill_schemas import SkillAttachReq, SkillCreate, SkillCreateReq, SkilledUserLitral
+from src.schemas.skill_schemas import SkillCreate
 from src.schemas.user_schemas import UserAccountTypeEmun
 
 INTERN_USER_TYPE = UserAccountTypeEmun.intern.value
@@ -19,7 +20,7 @@ class SkillService:
     def __init__(
             self,
             session: Annotated[AsyncSession, Depends(get_db_session)],
-            repo: Annotated[SkillRepository, Depends(SkillRepository)]
+            repo: Annotated[SkillRepository, Depends()]
     ):
         self.session = session
         self.skill_repo = repo
@@ -27,31 +28,33 @@ class SkillService:
     async def add_skills_to_user(
         self,
         user_id: uuid.UUID,
-        user_type: SkilledUserLitral,
-        skills: list[SkillAttachReq]
+        skills: list[SkillCreate]
     ):
         async with self.session.begin():
-            success = await self.skill_repo.attach_skills_to_user(self.session, user_id, user_type, skills)
-        if not success:
-            raise HTTPException(status_code=400, detail="Failed to add skills")
+            try:
+                new_skills: list[Skill] = await self.skill_repo.attach_skills_to_user(
+                    conn=self.session,
+                    user_id=user_id,
+                    skills=skills
+                )
+            except IntegrityError:
+                raise HTTPException(status_code=409, detail="Skills already exist")
+
+        return new_skills
+
 
     async def get_skills(self, search_term: str | None = None):
-        return await self.skill_repo.get_available_skills(self.session, search_term=search_term)
+        return await self.skill_repo.get_available_skills(conn=self.session, search_term=search_term)
+
 
     async def create_new_skill(
         self,
-        skill_creator_user_id: uuid.UUID,
-        skill: SkillCreateReq
+        skill: SkillCreate
     ):
-        skill = SkillCreate(
-            created_by_user_id=skill_creator_user_id,
-            **skill.model_dump()
-        )
         try:
             async with self.session.begin():
-                skill = await self.skill_repo.add_new_skill(self.session, skill)
+                skill = await self.skill_repo.add_new_skill(conn=self.session, skill=skill)
         except IntegrityError:
             raise HTTPException(status_code=400, detail="Skill already exists")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Failed to create skill")
+
         return skill

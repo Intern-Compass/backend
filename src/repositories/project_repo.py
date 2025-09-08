@@ -1,10 +1,11 @@
-from sqlalchemy import Select, select, Result, insert, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.app_models import Project, InternTask, Task
-from src.schemas.project_schemas import ProjectInModel, ProjectOutModel
-from typing import Optional, List
 import uuid
-from uuid import uuid4
+
+from sqlalchemy import select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.models.app_models import Project, InternTask, Task
+from src.schemas.project_schemas import ProjectInModel
+
 
 class ProjectRepository:
     def __init__(self):

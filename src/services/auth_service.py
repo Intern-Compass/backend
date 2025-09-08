@@ -40,6 +40,7 @@ class AuthService:
     async def create_unverified_new_user(
         self, new_user: UserInModel | InternInModel
     ) -> dict[str, str]:
+        print(f"{new_user.skills = }")
         async with self.session.begin():  # Transactional, for atomicity
             existing_user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session,
@@ -68,11 +69,11 @@ class AuthService:
                 new_user.password = hash_password(password=new_user.password)
 
                 unverified_user: User = (
-                    await self.intern_repo.create_new_intern(
+                    await self.intern_repo.create_new_intern( # if type: Intern
                         conn=self.session, new_intern=new_user
                     )
                     if isinstance(new_user, InternInModel)
-                    else await self.user_repo.create_new_user(
+                    else await self.user_repo.create_new_user( # if type: User
                         conn=self.session, new_user=new_user
                     )
                 )

@@ -1,9 +1,11 @@
-from sqlalchemy import Select, select, Result, insert, update, delete
+import uuid
+
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models.app_models import Note
 from src.schemas.note_schemas import NoteInModel
-from typing import Optional, List
-import uuid 
+
 
 class NoteRepository:
     def __init__(self):
