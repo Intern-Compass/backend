@@ -5,14 +5,15 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from src.routers.auth_router import router as intern_router
+from src.routers.auth_router import router as auth_router
+from src.routers.skill_router import router as skill_router
+from src.routers.intern_router import router as intern_router
+
 from src.logger import logger
 
 app = FastAPI()
 
-ORIGINS =  [
-    "*"
-]
+ORIGINS = ["*"]
 # noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def measure_response_time(request: Request, call_next):
@@ -31,6 +33,7 @@ async def measure_response_time(request: Request, call_next):
     response.headers["X-Process-Time"] = str(duration)
     return response
 
+
 @app.exception_handler(Exception)
 async def custom_exception_handler(_: Request, exc: Exception):
     logger.error(f"{str(exc)}")
@@ -39,10 +42,13 @@ async def custom_exception_handler(_: Request, exc: Exception):
         content={"detail": "An error occured. Check server"},
     )
 
+
 @app.get("/")
 async def greet(add_exc: bool = False):
     if add_exc:
         raise Exception
     return "Hello World"
 
+app.include_router(auth_router)
+app.include_router(skill_router)
 app.include_router(intern_router)

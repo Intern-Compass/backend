@@ -2,5 +2,8 @@ __pycache__/
 .idea/
 internship_matching_platform.db
 .env
+.venv/
 .log
 logs/
+docker-compose.override.yml
+_scripts/

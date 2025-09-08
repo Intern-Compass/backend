@@ -1,5 +1,6 @@
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import Enum, unique
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -39,3 +40,10 @@ class UserOutModel(BaseModel):
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
+
+
+@unique
+class UserAccountTypeEmun(str, Enum):
+    intern = "intern"
+    supervisor = "supervisor"
+    admin = "admin"
