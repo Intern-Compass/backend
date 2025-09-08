@@ -5,7 +5,10 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from src.routers.auth_router import router as intern_router
+from src.routers.auth_router import router as auth_router
+from src.routers.skill_router import router as skill_router
+from src.routers.intern_router import router as intern_router
+
 from src.logger import logger
 
 app = FastAPI()
@@ -46,5 +49,6 @@ async def greet(add_exc: bool = False):
         raise Exception
     return "Hello World"
 
-
+app.include_router(auth_router)
+app.include_router(skill_router)
 app.include_router(intern_router)

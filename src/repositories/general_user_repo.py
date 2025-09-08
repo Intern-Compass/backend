@@ -1,11 +1,12 @@
 from uuid import UUID
 
 from sqlalchemy import Select, select, Result, update, delete, or_, Update
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.app_models import User
 from src.schemas import UserInModel
+
+
 
 
 class UserRepository:
