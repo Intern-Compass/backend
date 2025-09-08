@@ -18,6 +18,8 @@ from src.utils import (
     hash_password,
     generate_random_code,
 )
+from ..infra.email.contexts import VerifyEmailContext, EmailVerifiedContext
+from ..infra.email import send_email
 
 
 class AuthService:
@@ -84,7 +86,14 @@ class AuthService:
 
         # At this point, transaction has committed successfully
         print(f"Code for {user_email}: {send_code}")
-        # TODO: Send email (use self.background_task here), use the unused ``send_code`` and ``user_email`` variables
+
+        # Send verification code to email
+        self.background_task.add_task(
+            send_email,
+            user_email,
+            context=VerifyEmailContext(send_code=send_code),
+        )
+
         return {"detail": "Verification code sent to email"}
 
     async def verify_user(self, code: str) -> dict[str, str]:
@@ -101,9 +110,17 @@ class AuthService:
                 values={"verified": True},
             )
             await self.code_repo.delete_code(conn=self.session, value=code)
+
             access_token: str = generate_access_token(
                 UserOutModel.from_user(verified_user)
             )
+
+        # Send confirmation mail once user has been created.
+        self.background_task.add_task(
+            send_email,
+            verified_user.email,
+            context=EmailVerifiedContext(),
+        )
 
         # TODO: Send confirmation mail once user has been created (use self.background_task)
         return {"access_token": access_token, "token_type": "Bearer"}
