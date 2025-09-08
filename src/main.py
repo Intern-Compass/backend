@@ -13,9 +13,7 @@ from src.logger import logger
 
 app = FastAPI()
 
-ORIGINS =  [
-    "*"
-]
+ORIGINS = ["*"]
 # noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.middleware("http")
 async def measure_response_time(request: Request, call_next):
@@ -34,6 +33,7 @@ async def measure_response_time(request: Request, call_next):
     response.headers["X-Process-Time"] = str(duration)
     return response
 
+
 @app.exception_handler(Exception)
 async def custom_exception_handler(_: Request, exc: Exception):
     logger.error(f"{str(exc)}")
@@ -41,6 +41,7 @@ async def custom_exception_handler(_: Request, exc: Exception):
         status_code=500,
         content={"detail": "An error occured. Check server"},
     )
+
 
 @app.get("/")
 async def greet(add_exc: bool = False):
