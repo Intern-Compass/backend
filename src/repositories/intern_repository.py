@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.logger import logger
 from src.models import User
-from src.models.app_models import Intern, Skill
+from src.models.app_models import Intern
 from src.repositories import SkillRepository
 from src.schemas import InternInModel
 from src.schemas.user_schemas import UserType
