@@ -5,11 +5,13 @@ from typing import Optional, List
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import String, Text, Date, DateTime, ForeignKey, Index
+from sqlalchemy import String, Text, Date, DateTime, ForeignKey, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import (
     relationship, Mapped, mapped_column, DeclarativeBase
 )
+
+from src.common import UserType, Department
 
 
 class ReprMixin:
@@ -29,6 +31,7 @@ class ReprMixin:
 class Base(DeclarativeBase, ReprMixin):
     pass
 
+user_type_enum = Enum(UserType, name="usertype", create_type=True)
 
 class User(Base):
     __tablename__ = "user"
@@ -50,9 +53,17 @@ class User(Base):
     phone_number: Mapped[str] = mapped_column(String(15))
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
+    date_of_birth: Mapped[datetime] = mapped_column(Date)
+    division_name: Mapped[Department] = mapped_column(
+        ForeignKey("division.name", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=False,
+    )
+    work_location: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now()
     )
+
+    type: Mapped[UserType] = mapped_column(user_type_enum)
     verified: Mapped[bool] = mapped_column(default=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -71,6 +82,9 @@ class User(Base):
     )
     skills: Mapped[List[Skill]] = relationship(
         "Skill", secondary="user_skill", back_populates="users"
+    )
+    division: Mapped[Optional[Division]] = relationship(
+        "Division", back_populates="users"
     )
 
 
@@ -95,10 +109,6 @@ class Intern(Base):
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
         unique=True,
     )
-    division_name: Mapped[str] = mapped_column(
-        ForeignKey("division.name", onupdate="CASCADE", ondelete="SET NULL"),
-        nullable=True,
-    )
     bio: Mapped[Optional[str]] = mapped_column(Text)
     supervisor_id: Mapped[str] = mapped_column(
         ForeignKey("supervisor.id", onupdate="CASCADE", ondelete="SET NULL"),
@@ -111,9 +121,6 @@ class Intern(Base):
     user: Mapped[User] = relationship("User", back_populates="intern")
     supervisor: Mapped[Supervisor] = relationship(
         "Supervisor", back_populates="interns"
-    )
-    division: Mapped[Optional[Division]] = relationship(
-        "Division", back_populates="interns"
     )
     tasks: Mapped[List[Task]] = relationship(
         "Task", secondary="intern_task", back_populates="interns"
@@ -150,9 +157,6 @@ class Supervisor(Base):
 
     user: Mapped[User] = relationship("User", back_populates="supervisor")
     interns: Mapped[List[Intern]] = relationship("Intern", back_populates="supervisor")
-    division: Mapped[Optional[Division]] = relationship(
-        "Division", back_populates="supervisors"
-    )
     projects: Mapped[List[Project]] = relationship(
         "Project", back_populates="supervisor"
     )
@@ -185,8 +189,7 @@ class Division(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
 
     # relationships
-    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="division")
-    supervisors: Mapped[List[Supervisor]] = relationship("Supervisor", back_populates="division")
+    users: Mapped[List[User]] = relationship("User", back_populates="division")
     projects: Mapped[List[Project]] = relationship("Project", back_populates="division")
 
 

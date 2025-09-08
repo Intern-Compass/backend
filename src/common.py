@@ -19,3 +19,8 @@ class Department(StrEnum):
     RISK_AND_COMPLIANCE = "risk_and_compliance"
     SALES_AND_DISTRIBUTION = "sales_and_distribution"
     STRATEGY_AND_INNOVATION = "strategy_and_innovation"
+
+class UserType(StrEnum):
+    SUPERVISOR = "swupervisor"
+    INTERN = "intern"
+    ADMIN = "admin"

@@ -11,10 +11,7 @@ from src.db import get_db_session
 from src.models.app_models import Skill
 from src.repositories import SkillRepository
 from src.schemas.skill_schemas import SkillCreate
-from src.schemas.user_schemas import UserAccountTypeEmun
 
-INTERN_USER_TYPE = UserAccountTypeEmun.intern.value
-SUPERVISOR_USER_TYPE = UserAccountTypeEmun.supervisor.value
 
 class SkillService:
     def __init__(

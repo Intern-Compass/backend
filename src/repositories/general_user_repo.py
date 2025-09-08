@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.app_models import User, Skill
 from src.schemas import UserInModel
-
-
+from src.schemas.user_schemas import UserType
 
 
 class UserRepository:
@@ -36,6 +35,10 @@ class UserRepository:
             phone_number=new_user.phone_number,
             email=new_user.email,
             password=new_user.password,
+            date_of_birth=new_user.date_of_birth,
+            work_location=new_user.work_location,
+            type=UserType.SUPERVISOR,
+            division_name=new_user.department,
         )
         user.skills = [Skill(name=skill.name) for skill in new_user.skills]
 

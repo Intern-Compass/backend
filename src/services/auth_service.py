@@ -4,6 +4,7 @@ from fastapi import HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
+from starlette.status import HTTP_409_CONFLICT
 
 from src.repositories.general_user_repo import UserRepository
 from src.models.app_models import User, VerificationCode
@@ -11,7 +12,7 @@ from src.db import get_db_session
 from src.repositories.intern_repository import InternRepository
 from src.repositories.verification_code_repo import VerificationCodeRepository
 from src.schemas import UserInModel, InternInModel
-from src.schemas.user_schemas import UserOutModel
+from src.schemas.user_schemas import UserOutModel, UserType
 from src.utils import (
     generate_access_token,
     password_is_correct,
@@ -40,7 +41,6 @@ class AuthService:
     async def create_unverified_new_user(
         self, new_user: UserInModel | InternInModel
     ) -> dict[str, str]:
-        print(f"{new_user.skills = }")
         async with self.session.begin():  # Transactional, for atomicity
             existing_user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session,
@@ -51,7 +51,7 @@ class AuthService:
             if existing_user:
                 if existing_user.verified:
                     raise HTTPException(
-                        status_code=400, detail="User already exists. Please log in"
+                        status_code=HTTP_409_CONFLICT, detail="User already exists. Please log in"
                     )
 
                 code = generate_random_code()
@@ -72,10 +72,11 @@ class AuthService:
                     await self.intern_repo.create_new_intern( # if type: Intern
                         conn=self.session, new_intern=new_user
                     )
-                    if isinstance(new_user, InternInModel)
-                    else await self.user_repo.create_new_user( # if type: User
+                    if new_user.type == UserType.INTERN
+                    else await self.user_repo.create_new_user( # if type: any other type
                         conn=self.session, new_user=new_user
                     )
+                    #TODO expand this to accomodate HR (admin) entities
                 )
 
                 code = generate_random_code()
@@ -113,7 +114,7 @@ class AuthService:
             await self.code_repo.delete_code(conn=self.session, value=code)
 
             access_token: str = generate_access_token(
-                UserOutModel.from_user(verified_user)
+                UserOutModel.from_user(verified_user),
             )
 
         # Send confirmation mail once user has been created.

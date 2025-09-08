@@ -1,12 +1,11 @@
 from datetime import datetime
-from enum import Enum, unique
+from enum import Enum, unique, StrEnum
 
 from pydantic import BaseModel
 
-from src.common import Department
+from src.common import Department, UserType
 from src.models import User
 from src.schemas.skill_schemas import SkillCreate
-
 
 class UserInModel(BaseModel):
     firstname: str
@@ -18,6 +17,7 @@ class UserInModel(BaseModel):
     date_of_birth: datetime
     department: Department
     work_location: str
+    type: UserType
 
 
 class UserOutModel(BaseModel):
@@ -26,8 +26,10 @@ class UserOutModel(BaseModel):
     lastname: str
     phone_number: str
     email: str
-    created_at: datetime
-    updated_at: datetime
+    date_of_birth: str
+    department: Department
+    work_location: str
+    type: UserType
 
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
@@ -37,13 +39,9 @@ class UserOutModel(BaseModel):
             lastname=user.lastname,
             phone_number=user.phone_number,
             email=user.email,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
+            type=user.type,
+            department=user.division_name,
+            date_of_birth=user.date_of_birth.isoformat(),
+            work_location=user.work_location,
         )
 
-
-@unique
-class UserAccountTypeEmun(str, Enum):
-    intern = "intern"
-    supervisor = "supervisor"
-    admin = "admin"

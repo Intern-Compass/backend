@@ -9,6 +9,7 @@ from src.models import User
 from src.models.app_models import Intern, Skill
 from src.repositories import SkillRepository
 from src.schemas import InternInModel
+from src.schemas.user_schemas import UserType
 
 
 class InternRepository:
@@ -30,6 +31,10 @@ class InternRepository:
             email=new_intern.email,
             phone_number=new_intern.phone_number,
             password=new_intern.password,
+            date_of_birth=new_intern.date_of_birth,
+            work_location=new_intern.work_location,
+            type=UserType.INTERN,
+            division_name=new_intern.department,
         )
         skill_list = [
             (await self.skill_repo.create_or_get_skill(conn=conn, skill_name=skill.name))
@@ -43,7 +48,6 @@ class InternRepository:
 
         intern: Intern = self.table(
             user_id=user_id,
-            division_name=new_intern.department,
             bio=new_intern.bio,
             supervisor=None,  # Default
             start_date=new_intern.internship_start_date,
