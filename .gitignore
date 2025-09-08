@@ -5,3 +5,5 @@ internship_matching_platform.db
 .venv/
 .log
 logs/
+docker-compose.override.yml
+_scripts/

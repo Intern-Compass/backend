@@ -28,6 +28,7 @@ def generate_access_token(
     )
     return access_token
 
+
 def password_is_correct(user_password: str, supplied_password: str) -> bool:
     try:
         if ph.verify(user_password, supplied_password):
@@ -36,8 +37,10 @@ def password_is_correct(user_password: str, supplied_password: str) -> bool:
         logger.error(f"Invalid Password: {e}")
     return False
 
+
 def hash_password(password: str) -> str:
     return ph.hash(password)
+
 
 def generate_random_code() -> str:
     return str(random.randint(100000, 999999))

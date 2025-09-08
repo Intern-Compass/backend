@@ -12,7 +12,9 @@ class InternRepository:
     def __init__(self):
         self.table = Intern
 
-    async def create_new_intern(self, conn: AsyncSession, new_intern: InternInModel) -> User:
+    async def create_new_intern(
+        self, conn: AsyncSession, new_intern: InternInModel
+    ) -> User:
         user_id: UUID = uuid4()
         user: User = User(
             id=user_id,
@@ -20,7 +22,7 @@ class InternRepository:
             lastname=new_intern.lastname,
             email=new_intern.email,
             phone_number=new_intern.phone_number,
-            password=new_intern.password
+            password=new_intern.password,
         )
         conn.add(user)
         await conn.flush()
@@ -29,7 +31,7 @@ class InternRepository:
             user_id=user_id,
             division_name=new_intern.department,
             bio=new_intern.bio,
-            supervisor=None, #Default
+            supervisor=None,  # Default
             start_date=new_intern.internship_start_date,
             end_date=new_intern.internship_end_date,
         )
