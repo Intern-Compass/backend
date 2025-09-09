@@ -52,6 +52,7 @@ class User(Base):
     lastname: Mapped[str] = mapped_column(String(50))
     phone_number: Mapped[str] = mapped_column(String(15))
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    normalized_email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     date_of_birth: Mapped[datetime] = mapped_column(Date)
     division_name: Mapped[Department] = mapped_column(

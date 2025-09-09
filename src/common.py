@@ -22,6 +22,6 @@ class Department(StrEnum):
 
 
 class UserType(StrEnum):
-    SUPERVISOR = "swupervisor"
+    SUPERVISOR = "supervisor"
     INTERN = "intern"
     ADMIN = "admin"

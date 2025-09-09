@@ -14,7 +14,7 @@ router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
 """Router concerns everything that has to do with authentication."""
 
 
-@router.post("/supervisor")
+@router.post("/register-supervisor")
 async def create_supervisor(
     create_user_request: UserInModel,
     general_user_service: Annotated[AuthService, Depends()],
@@ -22,7 +22,7 @@ async def create_supervisor(
     return await general_user_service.create_unverified_new_user(create_user_request)
 
 
-@router.post("/register")
+@router.post("/register-intern")
 async def create_intern(
     create_intern_request: InternInModel,
     general_user_service: Annotated[AuthService, Depends()],
@@ -31,7 +31,7 @@ async def create_intern(
 
 
 @router.post("/verify-code")
-async def verify_user(
+async def verify_user_and_create(
     verification_code: str, general_user_service: Annotated[AuthService, Depends()]
 ):
     return await general_user_service.verify_user(code=verification_code)
@@ -45,7 +45,7 @@ async def login(
 ):
     """Logs the intern in and returns access and refresh tokens"""
     return await auth_service.login(
-        username=form.username, password=form.password, res=response
+        username=form.username, password=form.password
     )
 
 
