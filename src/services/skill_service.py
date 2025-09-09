@@ -1,4 +1,4 @@
-from typing import Annotated, List
+from typing import Annotated
 import uuid
 
 from sqlalchemy.exc import IntegrityError
@@ -15,42 +15,35 @@ from src.schemas.skill_schemas import SkillCreate
 
 class SkillService:
     def __init__(
-            self,
-            session: Annotated[AsyncSession, Depends(get_db_session)],
-            repo: Annotated[SkillRepository, Depends()]
+        self,
+        session: Annotated[AsyncSession, Depends(get_db_session)],
+        repo: Annotated[SkillRepository, Depends()],
     ):
         self.session = session
         self.skill_repo = repo
 
-    async def add_skills_to_user(
-        self,
-        user_id: uuid.UUID,
-        skills: list[SkillCreate]
-    ):
+    async def add_skills_to_user(self, user_id: uuid.UUID, skills: list[SkillCreate]):
         async with self.session.begin():
             try:
                 new_skills: list[Skill] = await self.skill_repo.attach_skills_to_user(
-                    conn=self.session,
-                    user_id=user_id,
-                    skills=skills
+                    conn=self.session, user_id=user_id, skills=skills
                 )
             except IntegrityError:
                 raise HTTPException(status_code=409, detail="Skills already exist")
 
         return new_skills
 
-
     async def get_skills(self, search_term: str | None = None):
-        return await self.skill_repo.get_available_skills(conn=self.session, search_term=search_term)
+        return await self.skill_repo.get_available_skills(
+            conn=self.session, search_term=search_term
+        )
 
-
-    async def create_new_skill(
-        self,
-        skill: SkillCreate
-    ):
+    async def create_new_skill(self, skill: SkillCreate):
         try:
             async with self.session.begin():
-                skill = await self.skill_repo.add_new_skill(conn=self.session, skill=skill)
+                skill = await self.skill_repo.add_new_skill(
+                    conn=self.session, skill=skill
+                )
         except IntegrityError:
             raise HTTPException(status_code=400, detail="Skill already exists")
 

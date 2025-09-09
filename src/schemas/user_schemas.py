@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum, unique, StrEnum
 
 from pydantic import BaseModel
 
 from src.common import Department, UserType
 from src.models import User
 from src.schemas.skill_schemas import SkillCreate
+
 
 class UserInModel(BaseModel):
     firstname: str
@@ -45,3 +45,7 @@ class UserOutModel(BaseModel):
             work_location=user.work_location,
         )
 
+
+class ResetPasswordRequest(BaseModel):
+    code: str
+    password: str

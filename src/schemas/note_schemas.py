@@ -11,19 +11,20 @@ class NoteInModel(BaseModel):
     task_id: Optional[str]
     content: str
 
+
 class NoteOutModel(BaseModel):
     id: str
     content: str
     intern_id: str
     task_id: Optional[str]
-    created_at: datetime    
+    created_at: datetime
 
-    @classmethod         
+    @classmethod
     def from_model(cls, note: Note) -> "NoteOutModel":
         return NoteOutModel(
             id=str(note.id),
             content=note.content,
             intern_id=str(note.intern_id),
             task_id=note.task_id,
-            created_at=note.created_at
+            created_at=note.created_at,
         )

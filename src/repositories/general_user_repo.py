@@ -1,8 +1,8 @@
-from os import name
 from uuid import UUID
 
 from sqlalchemy import Select, select, Result, update, delete, or_, Update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.models.app_models import User, Skill
 from src.schemas import UserInModel
@@ -22,8 +22,12 @@ class UserRepository:
         if email is None and phone_number is None:
             raise ValueError("Either email or phone_number must be supplied.")
 
-        stmt: Select = select(self.table).where(
-            or_(self.table.email == email, self.table.phone_number == phone_number),
+        stmt: Select = (
+            select(self.table)
+            .where(
+                or_(self.table.email == email, self.table.phone_number == phone_number),
+            )
+            .options(selectinload(User.verification_code))
         )
         result: Result = await conn.execute(stmt)
         return result.scalars().first()

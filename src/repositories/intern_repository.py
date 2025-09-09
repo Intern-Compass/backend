@@ -13,10 +13,7 @@ from src.schemas.user_schemas import UserType
 
 
 class InternRepository:
-    def __init__(
-            self,
-            skill_repo: Annotated[SkillRepository, Depends()]
-    ):
+    def __init__(self, skill_repo: Annotated[SkillRepository, Depends()]):
         self.table = Intern
         self.skill_repo = skill_repo
 
@@ -37,7 +34,11 @@ class InternRepository:
             division_name=new_intern.department,
         )
         skill_list = [
-            (await self.skill_repo.create_or_get_skill(conn=conn, skill_name=skill.name))
+            (
+                await self.skill_repo.create_or_get_skill(
+                    conn=conn, skill_name=skill.name
+                )
+            )
             for skill in new_intern.skills
         ]
         user.skills = skill_list

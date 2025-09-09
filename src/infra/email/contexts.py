@@ -14,3 +14,11 @@ class VerifyEmailContext(EmailContext):
 class EmailVerifiedContext(EmailContext):
     __template_path__: str = "email_verified.html"
     __subject__: str = "Your email address has been verified"
+
+
+@dataclass(kw_only=True)
+class UpdatedUserContext(EmailContext):
+    __template_path__: str = "updated_user.html"
+    __subject__: str = "One or more of account details have been changed"
+
+    values_updated: dict

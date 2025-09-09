@@ -10,6 +10,7 @@ from src.utils import get_intern_user
 
 router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
 
+
 # TODO: refactor to be used by a logged in user
 @router.post("/{user_id}/skills", tags=["Skills"])
 async def add_skills_to_intern(
@@ -20,7 +21,5 @@ async def add_skills_to_intern(
     """
     Attach skills to an intern.
     """
-    await skill_service.add_skills_to_user(
-        user_id=user.get("sub"), skills=skills
-    )
+    await skill_service.add_skills_to_user(user_id=user.get("sub"), skills=skills)
     return ORJSONResponse({"message": "Skills added successfully"})

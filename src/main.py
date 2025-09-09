@@ -49,6 +49,7 @@ async def greet(add_exc: bool = False):
         raise Exception
     return "Hello World"
 
+
 app.include_router(auth_router)
 app.include_router(skill_router)
 app.include_router(intern_router)

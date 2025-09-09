@@ -11,15 +11,16 @@ class ProjectInModel(BaseModel):
     supervisor_id: str
     division_id: str
 
+
 class ProjectOutModel(BaseModel):
     id: str
     title: str
     description: str
     supervisor_id: str
     division_id: str
-    created_at: datetime    
+    created_at: datetime
 
-    @classmethod         
+    @classmethod
     def from_model(cls, project: Project) -> "ProjectOutModel":
         return ProjectOutModel(
             id=str(project.id),
@@ -27,5 +28,5 @@ class ProjectOutModel(BaseModel):
             description=project.description,
             supervisor_id=str(project.supervisor_id),
             division_id=str(project.division_id),
-            created_at=project.created_at
+            created_at=project.created_at,
         )
