@@ -82,7 +82,7 @@ async def send_email(
         if settings.SMTP_SENDER_NAME
         else settings.SMTP_SENDER_EMAIL
     )
-    message["To"] = ", ".join(settings.SMTP_RECEPIENTS)
+    message["To"] = ", ".join(recipients)
     message["Subject"] = subject
     message.set_content(markup, subtype="html")
     message["Importance"] = importance

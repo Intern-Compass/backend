@@ -33,7 +33,7 @@ class InternRepository:
             date_of_birth=new_intern.date_of_birth,
             work_location=new_intern.work_location,
             type=UserType.INTERN,
-            division_name=new_intern.department,
+            department_id=new_intern.department.value,
         )
         skill_list = [
             (

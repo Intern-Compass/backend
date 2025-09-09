@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from src.common import Department, UserType
+from src.common import DepartmentEnum, UserType
 from src.models import User
 from src.schemas.skill_schemas import SkillCreate
 
@@ -15,9 +15,8 @@ class UserInModel(BaseModel):
     password: str
     skills: list[SkillCreate]
     date_of_birth: datetime
-    department: Department
+    department: DepartmentEnum
     work_location: str
-    type: UserType
 
 
 class UserOutModel(BaseModel):
@@ -27,9 +26,13 @@ class UserOutModel(BaseModel):
     phone_number: str
     email: str
     date_of_birth: str
-    department: Department
+    department: DepartmentEnum
     work_location: str
     type: UserType
+
+    class Config:
+        use_enum_values = True
+
 
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
@@ -40,7 +43,7 @@ class UserOutModel(BaseModel):
             phone_number=user.phone_number,
             email=user.email,
             type=user.type,
-            department=user.division_name,
+            department=DepartmentEnum(user.department_id),
             date_of_birth=user.date_of_birth.isoformat(),
             work_location=user.work_location,
         )
