@@ -131,8 +131,6 @@ class AuthService:
             user_normalized_email,
             context=EmailVerifiedContext(),
         )
-
-        # TODO: Send confirmation mail once user has been created (use self.background_task)
         return {"access_token": access_token, "token_type": "Bearer"}
 
     async def login(self, username: str, password: str):
