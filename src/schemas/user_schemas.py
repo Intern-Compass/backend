@@ -52,3 +52,6 @@ class ResetPasswordRequest(BaseModel):
 
 class UserEmail(BaseModel):
     email: str
+
+class VerificationCode(BaseModel):
+    code: str

@@ -7,7 +7,7 @@ from starlette.responses import Response
 
 from src.schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
-from src.schemas.user_schemas import ResetPasswordRequest, UserEmail
+from src.schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
 from src.services import AuthService
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
@@ -32,9 +32,9 @@ async def create_intern(
 
 @router.post("/verify-code")
 async def verify_user_and_create(
-    code: str, general_user_service: Annotated[AuthService, Depends()]
+    code: VerificationCode, general_user_service: Annotated[AuthService, Depends()]
 ):
-    return await general_user_service.verify_user(code=code)
+    return await general_user_service.verify_user(code=code.code)
 
 
 @router.post("/token")
