@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_409_CONFLICT
 
 from src.db import get_db_session
 from src.models.app_models import Skill
@@ -29,7 +30,7 @@ class SkillService:
                     conn=self.session, user_id=user_id, skills=skills
                 )
             except IntegrityError:
-                raise HTTPException(status_code=409, detail="Skills already exist")
+                raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Skills already exist")
 
         return new_skills
 
@@ -45,6 +46,6 @@ class SkillService:
                     conn=self.session, skill=skill
                 )
         except IntegrityError:
-            raise HTTPException(status_code=400, detail="Skill already exists")
+            raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Skill already exists")
 
         return skill

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from src.routers.auth_router import router as auth_router
 from src.routers.skill_router import router as skill_router
@@ -38,15 +39,13 @@ async def measure_response_time(request: Request, call_next):
 async def custom_exception_handler(_: Request, exc: Exception):
     logger.error(f"{str(exc)}")
     return JSONResponse(
-        status_code=500,
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An error occured. Check server"},
     )
 
 
 @app.get("/")
-async def greet(add_exc: bool = False):
-    if add_exc:
-        raise Exception
+async def greet():
     return "Hello World"
 
 

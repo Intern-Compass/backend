@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from src.models.app_models import User, Skill
 from src.schemas import UserInModel
 from src.schemas.user_schemas import UserType
+from src.utils import normalize_email
 
 
 class UserRepository:
@@ -25,7 +26,7 @@ class UserRepository:
         stmt: Select = (
             select(self.table)
             .where(
-                or_(self.table.email == email, self.table.phone_number == phone_number),
+                or_(self.table.normalized_email == normalize_email(email), self.table.phone_number == phone_number),
             )
             .options(selectinload(User.verification_code))
         )
@@ -38,6 +39,7 @@ class UserRepository:
             lastname=new_user.lastname,
             phone_number=new_user.phone_number,
             email=new_user.email,
+            normalized_email=normalize_email(new_user.email),
             password=new_user.password,
             date_of_birth=new_user.date_of_birth,
             work_location=new_user.work_location,

@@ -10,6 +10,7 @@ from src.models.app_models import Intern
 from src.repositories import SkillRepository
 from src.schemas import InternInModel
 from src.schemas.user_schemas import UserType
+from src.utils import normalize_email
 
 
 class InternRepository:
@@ -26,6 +27,7 @@ class InternRepository:
             firstname=new_intern.firstname,
             lastname=new_intern.lastname,
             email=new_intern.email,
+            normalized_email=normalize_email(new_intern.email),
             phone_number=new_intern.phone_number,
             password=new_intern.password,
             date_of_birth=new_intern.date_of_birth,
