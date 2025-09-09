@@ -49,3 +49,6 @@ class UserOutModel(BaseModel):
 class ResetPasswordRequest(BaseModel):
     code: str
     password: str
+
+class UserEmail(BaseModel):
+    email: str

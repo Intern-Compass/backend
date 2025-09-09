@@ -7,7 +7,7 @@ from starlette.responses import Response
 
 from src.schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
-from src.schemas.user_schemas import ResetPasswordRequest
+from src.schemas.user_schemas import ResetPasswordRequest, UserEmail
 from src.services import AuthService
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
@@ -52,9 +52,9 @@ async def login(
 @router.post("/forgot-password")
 async def request_request_password(
     auth_service: Annotated[AuthService, Depends()],
-    email: str,
+    user_email: UserEmail,
 ) -> dict[str, str]:
-    return await auth_service.request_reset_password(email=email)
+    return await auth_service.request_reset_password(email=user_email.email)
 
 
 @router.post("/reset-password")
