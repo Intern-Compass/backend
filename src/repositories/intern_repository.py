@@ -52,7 +52,6 @@ class InternRepository:
         intern: Intern = self.table(
             user_id=user_id,
             bio=new_intern.bio,
-            supervisor=None,  # Default
             start_date=new_intern.internship_start_date,
             end_date=new_intern.internship_end_date,
         )
