@@ -9,7 +9,7 @@ from src.services.skill_service import SkillService
 router: APIRouter = APIRouter(prefix="/skills", tags=["Skills"])
 
 
-@router.get("/skills")
+@router.get("/")
 async def get_available_skills(
     skill_service: Annotated[SkillService, Depends()], search_query: str | None = None
 ) -> list[SkillRes]:
@@ -18,7 +18,7 @@ async def get_available_skills(
 
 
 # TODO: refactor to be used by a logged in user
-@router.post("/skill")
+@router.post("/")
 async def create_skill(
     skill: SkillCreate,
     skill_service: Annotated[SkillService, Depends()],

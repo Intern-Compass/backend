@@ -12,7 +12,7 @@ router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
 
 
 # TODO: refactor to be used by a logged in user
-@router.post("/{user_id}/skills", tags=["Skills"])
+@router.post("/skills", tags=["Skills"])
 async def add_skills_to_intern(
     skills: list[SkillCreate],
     user: Annotated[dict, Depends(get_intern_user)],
