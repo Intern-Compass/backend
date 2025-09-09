@@ -7,6 +7,7 @@ from starlette.responses import Response
 
 from src.schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
+from src.schemas.user_schemas import ResetPasswordRequest
 from src.services import AuthService
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
@@ -45,4 +46,22 @@ async def login(
     """Logs the intern in and returns access and refresh tokens"""
     return await auth_service.login(
         username=form.username, password=form.password, res=response
+    )
+
+
+@router.post("/forgot-password")
+async def request_request_password(
+    auth_service: Annotated[AuthService, Depends()],
+    user_email: str,
+) -> dict[str, str]:
+    return await auth_service.request_reset_password(email=user_email)
+
+
+@router.post("/reset-password")
+async def reset_password(
+    details: ResetPasswordRequest,
+    auth_service: Annotated[AuthService, Depends()],
+):
+    return await auth_service.verify_code_and_reset_password(
+        code=details.code, new_password=details.password
     )

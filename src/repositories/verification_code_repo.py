@@ -12,9 +12,7 @@ class VerificationCodeRepository:
         self.table = VerificationCode
 
     async def create_code(self, conn: AsyncSession, user_id: UUID, code: str):
-        verification_code: VerificationCode = VerificationCode(
-            user_id=user_id, value=code
-        )
+        verification_code: VerificationCode = self.table(user_id=user_id, value=code)
         conn.add(verification_code)
         await conn.flush()
         await conn.refresh(verification_code)

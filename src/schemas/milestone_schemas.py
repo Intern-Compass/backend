@@ -12,15 +12,16 @@ class MilestoneInModel(BaseModel):
     due_date: date
     status: str
 
+
 class MilestoneOutModel(BaseModel):
     id: str
     project_id: str
     title: str
     description: str
     due_date: date
-    status: str 
+    status: str
 
-    @classmethod         
+    @classmethod
     def from_model(cls, milestone: Milestone) -> "MilestoneOutModel":
         return MilestoneOutModel(
             id=str(milestone.id),
@@ -28,5 +29,5 @@ class MilestoneOutModel(BaseModel):
             title=milestone.title,
             description=milestone.description,
             due_date=milestone.due_date,
-            status=milestone.status
+            status=milestone.status,
         )

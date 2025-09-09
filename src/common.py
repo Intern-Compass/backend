@@ -20,6 +20,7 @@ class Department(StrEnum):
     SALES_AND_DISTRIBUTION = "sales_and_distribution"
     STRATEGY_AND_INNOVATION = "strategy_and_innovation"
 
+
 class UserType(StrEnum):
     SUPERVISOR = "swupervisor"
     INTERN = "intern"
