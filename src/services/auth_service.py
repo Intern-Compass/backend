@@ -79,7 +79,7 @@ class AuthService:
                     await self.intern_repo.create_new_intern(
                         conn=self.session, new_intern=new_user
                     )  # if the type is Intern
-                    if new_user.type == UserType.INTERN
+                    if isinstance(new_user, InternInModel)
                     else await self.user_repo.create_new_user(  # if type: any other type
                         conn=self.session, new_user=new_user
                     )
@@ -224,6 +224,7 @@ class AuthService:
                 }
 
         if user_email:
+            # TODO: Change to ResetPasswordEmailContext
             self.background_task.add_task(
                 send_email,
                 user_email,

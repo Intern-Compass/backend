@@ -33,7 +33,7 @@ class InternRepository:
             date_of_birth=new_intern.date_of_birth,
             work_location=new_intern.work_location,
             type=UserType.INTERN,
-            division_name=new_intern.department,
+            department_id=new_intern.department.value,
         )
         skill_list = [
             (
@@ -52,7 +52,6 @@ class InternRepository:
         intern: Intern = self.table(
             user_id=user_id,
             bio=new_intern.bio,
-            supervisor=None,  # Default
             start_date=new_intern.internship_start_date,
             end_date=new_intern.internship_end_date,
         )

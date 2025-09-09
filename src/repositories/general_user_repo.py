@@ -44,7 +44,7 @@ class UserRepository:
             date_of_birth=new_user.date_of_birth,
             work_location=new_user.work_location,
             type=UserType.SUPERVISOR,
-            division_name=new_user.department,
+            department_id=new_user.department.value,
         )
         user.skills = [Skill(name=skill.name) for skill in new_user.skills]
 
