@@ -195,6 +195,9 @@ class AuthService:
                     f"No user with email {email} exists to send verification code."
                 )
 
+            user_email: str | None = None
+            send_code: str | None = None
+
             if user and not user.verification_code:
                 code = generate_random_code()
                 await self.code_repo.create_code(
@@ -220,11 +223,12 @@ class AuthService:
                     "detail": "If this email exists, a password reset email will be sent."
                 }
 
-        self.background_task.add_task(
-            send_email,
-            user_email,
-            context=VerifyEmailContext(send_code=send_code),
-        )
+        if user_email:
+            self.background_task.add_task(
+                send_email,
+                user_email,
+                context=VerifyEmailContext(send_code=send_code),
+            )
         return response
 
     async def verify_code_and_reset_password(self, code: str, new_password: str):
