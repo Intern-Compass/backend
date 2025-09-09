@@ -32,9 +32,9 @@ async def create_intern(
 
 @router.post("/verify-code")
 async def verify_user_and_create(
-    verification_code: str, general_user_service: Annotated[AuthService, Depends()]
+    code: str, general_user_service: Annotated[AuthService, Depends()]
 ):
-    return await general_user_service.verify_user(code=verification_code)
+    return await general_user_service.verify_user(code=code)
 
 
 @router.post("/token")
@@ -52,9 +52,9 @@ async def login(
 @router.post("/forgot-password")
 async def request_request_password(
     auth_service: Annotated[AuthService, Depends()],
-    user_email: str,
+    email: str,
 ) -> dict[str, str]:
-    return await auth_service.request_reset_password(email=user_email)
+    return await auth_service.request_reset_password(email=email)
 
 
 @router.post("/reset-password")
