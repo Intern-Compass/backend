@@ -55,7 +55,7 @@ class ResetPasswordRequest(BaseModel):
     password: str
 
 class UserEmail(BaseModel):
-    email: str
+    email: Annotated[str, EmailStr]
 
 class VerificationCode(BaseModel):
     code: str
