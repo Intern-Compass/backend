@@ -1,6 +1,13 @@
 __pycache__/
 .idea/
 internship_matching_platform.db
+.env.*
 .env
 .log
 logs/
+.venv
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
