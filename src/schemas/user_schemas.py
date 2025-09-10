@@ -1,21 +1,22 @@
 from datetime import datetime
-from enum import Enum, StrEnum
-from uuid import UUID
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
-from src.common import Department
+from src.common import DepartmentEnum, UserType
 from src.models import User
+from src.schemas.skill_schemas import SkillCreate
 
 
 class UserInModel(BaseModel):
     firstname: str
     lastname: str
     phone_number: str
-    email: str
+    email: Annotated[str, EmailStr]
     password: str
+    skills: list[SkillCreate]
     date_of_birth: datetime
-    department: Department
+    department: DepartmentEnum
     work_location: str
 
 
@@ -25,8 +26,14 @@ class UserOutModel(BaseModel):
     lastname: str
     phone_number: str
     email: str
-    created_at: datetime
-    updated_at: datetime
+    date_of_birth: str
+    department: DepartmentEnum
+    work_location: str
+    type: UserType
+
+    class Config:
+        use_enum_values = True
+
 
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
@@ -36,6 +43,19 @@ class UserOutModel(BaseModel):
             lastname=user.lastname,
             phone_number=user.phone_number,
             email=user.email,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
+            type=user.type,
+            department=DepartmentEnum(user.department_id),
+            date_of_birth=user.date_of_birth.isoformat(),
+            work_location=user.work_location,
         )
+
+
+class ResetPasswordRequest(BaseModel):
+    code: str
+    password: str
+
+class UserEmail(BaseModel):
+    email: str
+
+class VerificationCode(BaseModel):
+    code: str

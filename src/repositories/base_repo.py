@@ -1,11 +1,6 @@
-from sqlalchemy import insert, select, update, delete, Select, Result
+from sqlalchemy import insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.app_models import (
-    Intern, Supervisor, Administrator, Division,
-    Skill, InternSkill, Project, Task, TaskSkill,
-    InternTask, Milestone, Note, SupervisorSkill, Base
-)
 
 class BaseRepository:
     def __init__(self, table):
@@ -40,42 +35,3 @@ class BaseRepository:
         stmt = delete(self.table).where(self.table.id == id_value)
         await conn.execute(stmt)
 
-
-class InternRepository(BaseRepository):
-    def __init__(self): super().__init__(Intern)
-
-class SupervisorRepository(BaseRepository):
-    def __init__(self): super().__init__(Supervisor)
-
-class AdministratorRepository(BaseRepository):
-    def __init__(self): super().__init__(Administrator)
-
-class DivisionRepository(BaseRepository):
-    def __init__(self): super().__init__(Division)
-
-class SkillRepository(BaseRepository):
-    def __init__(self): super().__init__(Skill)
-
-class InternSkillRepository(BaseRepository):
-    def __init__(self): super().__init__(InternSkill)
-
-class ProjectRepository(BaseRepository):
-    def __init__(self): super().__init__(Project)
-
-class TaskRepository(BaseRepository):
-    def __init__(self): super().__init__(Task)
-
-class TaskSkillRepository(BaseRepository):
-    def __init__(self): super().__init__(TaskSkill)
-
-class InternTaskRepository(BaseRepository):
-    def __init__(self): super().__init__(InternTask)
-
-class MilestoneRepository(BaseRepository):
-    def __init__(self): super().__init__(Milestone)
-
-class NoteRepository(BaseRepository):
-    def __init__(self): super().__init__(Note)
-
-class SupervisorSkillRepository(BaseRepository):
-    def __init__(self): super().__init__(SupervisorSkill)

@@ -1,2 +1,4 @@
 from .general_user_repo import UserRepository
-from .base_repo import BaseRepository
+from .skill_repo import SkillRepository
+
+__all__ = ['UserRepository', 'SkillRepository']

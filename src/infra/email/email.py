@@ -8,14 +8,14 @@ from aiosmtplib import send
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import validate_call, ConfigDict, EmailStr
 
-from ..logger import logger
-from ..settings import settings
+from ...logger import logger
+from ...settings import settings
 
 
 @lru_cache
 def _get_template_environment():
     return Environment(
-        loader=FileSystemLoader(settings.TEMPLATES_FOLDER),
+        loader=FileSystemLoader("./templates"),
         autoescape=select_autoescape(["html", "xml"]),
     )
 
@@ -82,7 +82,7 @@ async def send_email(
         if settings.SMTP_SENDER_NAME
         else settings.SMTP_SENDER_EMAIL
     )
-    message["To"] = ", ".join(settings.SMTP_RECEPIENTS)
+    message["To"] = ", ".join(recipients)
     message["Subject"] = subject
     message.set_content(markup, subtype="html")
     message["Importance"] = importance

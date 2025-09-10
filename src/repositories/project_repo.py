@@ -1,0 +1,66 @@
+import uuid
+
+from sqlalchemy import select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.models.app_models import Project, InternTask, Task
+from src.schemas.project_schemas import ProjectInModel
+
+
+class ProjectRepository:
+    def __init__(self):
+        self.table = Project
+
+    async def create_new_project(self, new_project: ProjectInModel, conn: AsyncSession):
+        project: Project = Project(
+            title=new_project.title,
+            description=new_project.description,
+            supervisor_id=uuid.UUID(new_project.supervisor_id),
+            division_id=uuid.UUID(new_project.division_id),
+        )
+        conn.add(project)
+        return project
+
+    async def get_project_by_id(self, conn: AsyncSession, id_value: str):
+        stmt = select(self.table).where(self.table.id == uuid.UUID(id_value))
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_all_projects(self, conn: AsyncSession):
+        stmt = select(self.table)
+        result = await conn.execute(stmt)
+        return result.scalars().all()
+
+    async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: str):
+        stmt = (
+            select(self.table)
+            .join(Task, self.table.id == Task.project_id)
+            .join(InternTask, Task.id == InternTask.task_id)
+            .where(InternTask.intern_id == uuid.UUID(intern_id))
+            .distinct()
+        )
+        result = await conn.execute(stmt)
+        return result.scalars().all()
+
+    async def get_all_projects_by_supervisor_id(
+        self, conn: AsyncSession, supervisor_id: str
+    ):
+        stmt = select(self.table).where(
+            self.table.supervisor_id == uuid.UUID(supervisor_id)
+        )
+        result = await conn.execute(stmt)
+        return result.scalars().all()
+
+    async def update_project(self, conn: AsyncSession, id_value: str, values: dict):
+        stmt = (
+            update(self.table)
+            .where(self.table.id == uuid.UUID(id_value))
+            .values(**values)
+            .returning(self.table)
+        )
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete_project(self, conn: AsyncSession, id_value: str) -> None:
+        stmt = delete(self.table).where(self.table.id == uuid.UUID(id_value))
+        await conn.execute(stmt)
