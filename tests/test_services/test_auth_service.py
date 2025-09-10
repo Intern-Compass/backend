@@ -1,9 +1,8 @@
 """ Test for Auth Service """
 
 import pytest
-from unittest.mock import patch, ANY
+from unittest.mock import AsyncMock, patch, ANY
 from fastapi import HTTPException
-from starlette.responses import Response
 
 from tests.utils.utils import (
     create_mock_user,
@@ -78,7 +77,7 @@ class TestCreateUnverifiedNewUser:
         with pytest.raises(HTTPException) as excinfo:
             await auth_service.create_unverified_new_user(new_user_data)
         
-        assert excinfo.value.status_code == 400
+        assert excinfo.value.status_code == 409
         assert "User already exists" in excinfo.value.detail
 
 
@@ -105,7 +104,7 @@ class TestVerifyUser:
         }
 
     async def test_verify_user_invalid_code(self, auth_service, mock_code_repo):
-        # Mock the repo to return None for the code lookup
+        # Mock the repo to return None
         mock_code_repo.get_code.return_value = None
 
         with pytest.raises(HTTPException) as excinfo:
@@ -116,15 +115,13 @@ class TestVerifyUser:
 
 
 class TestLogin:
-    """Tests for the login method."""
-
     @patch('src.services.auth_service.generate_access_token', return_value="fake.access.token")
     @patch('src.services.auth_service.password_is_correct', return_value=True)
     async def test_login_success(self, mock_password_check, mock_generate_token, auth_service, mock_user_repo):
         existing_verified_user = create_mock_user(verified=True)
         mock_user_repo.get_user_by_email_or_phone.return_value = existing_verified_user
         
-        result = await auth_service.login("test@example.com", "correct_password", Response())
+        result = await auth_service.login("test@example.com", "correct_password")
 
         mock_user_repo.get_user_by_email_or_phone.assert_awaited_once()
         mock_password_check.assert_called_once()
@@ -135,7 +132,7 @@ class TestLogin:
         mock_user_repo.get_user_by_email_or_phone.return_value = None
 
         with pytest.raises(HTTPException) as excinfo:
-            await auth_service.login("nouser@example.com", "password", Response())
+            await auth_service.login("nouser@example.com", "password")
         assert excinfo.value.status_code == 401
         
     @patch('src.services.auth_service.password_is_correct', return_value=False)
@@ -144,7 +141,7 @@ class TestLogin:
         mock_user_repo.get_user_by_email_or_phone.return_value = existing_user
 
         with pytest.raises(HTTPException) as excinfo:
-            await auth_service.login("test@example.com", "wrong_password", Response())
+            await auth_service.login("test@example.com", "wrong_password")
         assert excinfo.value.status_code == 401
         
     @patch('src.services.auth_service.password_is_correct', return_value=True)
@@ -153,6 +150,63 @@ class TestLogin:
         mock_user_repo.get_user_by_email_or_phone.return_value = unverified_user
 
         with pytest.raises(HTTPException) as excinfo:
-            await auth_service.login("test@example.com", "any_password", Response())
+            await auth_service.login("test@example.com", "any_password")
         assert excinfo.value.status_code == 401
 
+
+class TestRequestResetPassword:
+    """Tests for the request_reset_password method."""
+
+    async def test_request_reset_password_user_exists(self, auth_service, mock_user_repo, mock_code_repo, mock_background_tasks):
+        existing_user = create_mock_user(verified=True)
+        mock_user_repo.get_user_by_email_or_phone.return_value = existing_user
+
+        result = await auth_service.request_reset_password(existing_user.email)
+
+        mock_user_repo.get_user_by_email_or_phone.assert_awaited_once_with(conn=ANY, email=existing_user.email)
+        mock_code_repo.upsert_code_with_user_id.assert_awaited_once()
+        mock_background_tasks.add_task.assert_called_once()
+        assert "a password reset email will be sent" in result["detail"]
+
+    async def test_request_reset_password_user_does_not_exist(self, auth_service, mock_user_repo, mock_code_repo, mock_background_tasks):
+        mock_user_repo.get_user_by_email_or_phone.return_value = None
+
+        result = await auth_service.request_reset_password("nonexistent@example.com")
+
+        mock_user_repo.get_user_by_email_or_phone.assert_awaited_once_with(conn=ANY, email="nonexistent@example.com")
+        mock_code_repo.upsert_code_with_user_id.assert_not_awaited()
+        mock_background_tasks.add_task.assert_not_called()
+        assert "a password reset email will be sent" in result["detail"]
+
+
+class TestVerifyCodeAndResetPassword:
+    """Tests for the verify_code_and_reset_password method."""
+
+    @patch('src.services.auth_service.hash_password', return_value="new_hashed_password")
+    async def test_reset_password_success(self, mock_hash_password, auth_service, mock_user_repo, mock_code_repo, mock_background_tasks):
+        mock_user = create_mock_user(verified=True)
+        mock_code = create_mock_verification_code(user_id=mock_user.id)
+        
+        auth_service._verify_code = AsyncMock(return_value=mock_code)
+        mock_user_repo.update.return_value = mock_user
+
+        result = await auth_service.verify_code_and_reset_password(code="123456", new_password="new_strong_password")
+
+        auth_service._verify_code.assert_awaited_once_with(code="123456", conn=ANY)
+        mock_hash_password.assert_called_once_with("new_strong_password")
+        mock_user_repo.update.assert_awaited_once_with(
+            conn=ANY,
+            user_id=mock_code.user_id,
+            values={"password": "new_hashed_password"}
+        )
+        mock_background_tasks.add_task.assert_called_once()
+        assert "password has been reset successfully" in result["detail"]
+
+    async def test_reset_password_invalid_code(self, auth_service):
+        auth_service._verify_code = AsyncMock(return_value=False)
+
+        with pytest.raises(HTTPException) as excinfo:
+            await auth_service.verify_code_and_reset_password(code="invalidcode", new_password="any_password")
+        
+        assert excinfo.value.status_code == 400
+        assert "Invalid verification code" in excinfo.value.detail
