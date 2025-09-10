@@ -22,3 +22,11 @@ class UpdatedUserContext(EmailContext):
     __subject__: str = "One or more of account details have been changed"
 
     values_updated: dict
+
+
+@dataclass(kw_only=True)
+class ForgotPasswordContext(EmailContext):
+    __template_path__: str = "forgot_password.html"
+    __subject__: str = "Password Reset Request"
+
+    reset_link: str
