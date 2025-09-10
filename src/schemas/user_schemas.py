@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from src.common import DepartmentEnum, UserType
 from src.models import User
@@ -11,7 +12,7 @@ class UserInModel(BaseModel):
     firstname: str
     lastname: str
     phone_number: str
-    email: str
+    email: Annotated[str, EmailStr]
     password: str
     skills: list[SkillCreate]
     date_of_birth: datetime
