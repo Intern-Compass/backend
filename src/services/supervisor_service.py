@@ -26,7 +26,6 @@ class SupervisorService:
         self.intern_repo = intern_repo
 
     async def get_interns(self, supervisor_id: str):
-        print(supervisor_id)
         async with self.session.begin():
             supervisor: Supervisor = (
                 await self.supervisor_service.get_supervisor_details(

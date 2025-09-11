@@ -1,20 +1,17 @@
 import uuid
 
 from typing import Annotated
-from uuid import UUID, uuid4
 
 from fastapi.params import Depends
 from sqlalchemy import Select, select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.logger import logger
-from src.models import User
-from src.models.app_models import Intern
-from src.repositories import SkillRepository
-from src.schemas import InternInModel
-from src.schemas.user_schemas import UserType
-from src.utils import normalize_email
+from ..models.app_models import Intern, User
+from ..repositories import SkillRepository
+from ..schemas.intern_schemas import InternInModel
+from ..schemas.user_schemas import UserType
+from ..utils import normalize_email
 
 
 class InternRepository:

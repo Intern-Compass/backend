@@ -1,16 +1,15 @@
 import uuid
 from uuid import UUID, uuid4
 
-import sqlalchemy.exc
 from sqlalchemy import Select, select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.common import UserType
-from src.models import User
-from src.models.app_models import Supervisor, Intern
-from src.schemas.supervisor_schemas import SupervisorInModel
-from src.utils import normalize_email
+from ..common import UserType
+from ..models import User
+from ..models.app_models import Supervisor, Intern
+from ..schemas.supervisor_schemas import SupervisorInModel
+from ..utils import normalize_email
 
 
 class SupervisorRepository:

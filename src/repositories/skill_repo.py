@@ -4,9 +4,9 @@ from sqlalchemy import select, Select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models import User
-from src.models.app_models import Skill
-from src.schemas.skill_schemas import SkillCreate
+from ..models import User
+from ..models.app_models import Skill
+from ..schemas.skill_schemas import SkillCreate
 
 
 class SkillRepository:

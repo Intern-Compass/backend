@@ -9,7 +9,7 @@ from sqlalchemy import String, Text, Date, DateTime, ForeignKey, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column, DeclarativeBase
 
-from src.common import UserType, DepartmentEnum
+from ..common import UserType
 
 
 class ReprMixin:

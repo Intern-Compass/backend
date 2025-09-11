@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Project, InternTask, Task
-from src.schemas.project_schemas import ProjectInModel
+from ..models.app_models import Project, InternTask, Task
+from ..schemas.project_schemas import ProjectInModel
 
 
 class ProjectRepository:

@@ -4,10 +4,9 @@ from sqlalchemy import Select, select, Result, update, delete, or_, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models.app_models import User, Skill
-from src.schemas import UserInModel
-from src.schemas.user_schemas import UserType
-from src.utils import normalize_email
+from ..models.app_models import User, Skill
+from ..schemas.user_schemas import UserType, UserInModel
+from ..utils import normalize_email
 
 
 class UserRepository:
