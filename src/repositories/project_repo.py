@@ -12,13 +12,15 @@ class ProjectRepository:
         self.table = Project
 
     async def create_new_project(self, new_project: ProjectInModel, conn: AsyncSession):
-        project: Project = Project(
+        project: Project = self.table(
             title=new_project.title,
             description=new_project.description,
             supervisor_id=uuid.UUID(new_project.supervisor_id),
             division_id=uuid.UUID(new_project.division_id),
         )
         conn.add(project)
+        await conn.flush()
+        await conn.refresh(project)
         return project
 
     async def get_project_by_id(self, conn: AsyncSession, id_value: str):

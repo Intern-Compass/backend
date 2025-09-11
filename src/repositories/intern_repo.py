@@ -1,8 +1,12 @@
+import uuid
+
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi.params import Depends
+from sqlalchemy import Select, select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.logger import logger
 from src.models import User
@@ -21,9 +25,7 @@ class InternRepository:
     async def create_new_intern(
         self, conn: AsyncSession, new_intern: InternInModel
     ) -> User:
-        user_id: UUID = uuid4()
         user: User = User(
-            id=user_id,
             firstname=new_intern.firstname,
             lastname=new_intern.lastname,
             email=new_intern.email,
@@ -44,18 +46,27 @@ class InternRepository:
             for skill in new_intern.skills
         ]
         user.skills = skill_list
-        logger.info(skill_list)
+
+        intern: Intern = self.table(
+            bio=new_intern.bio,
+            school=new_intern.school,
+            start_date=new_intern.internship_start_date,
+            end_date=new_intern.internship_end_date,
+        )
+        user.intern = intern
 
         conn.add(user)
         await conn.flush()
 
-        intern: Intern = self.table(
-            user_id=user_id,
-            bio=new_intern.bio,
-            start_date=new_intern.internship_start_date,
-            end_date=new_intern.internship_end_date,
-        )
-        conn.add(intern)
-        await conn.flush()
-
         return user
+
+    async def get_intern_by_id(self, conn: AsyncSession, intern_id: str):
+        stmt: Select = (
+            select(self.table)
+            .where(self.table.id == uuid.UUID(intern_id))
+            .options(selectinload(Intern.user))
+        )
+        result: Result = await conn.execute(stmt)
+
+        return result.scalar_one_or_none()
+

@@ -72,19 +72,19 @@ class User(Base):
         onupdate=lambda: datetime.now(),
     )
 
-    intern: Mapped[Optional[Intern]] = relationship(
+    intern: Mapped[Intern] = relationship(
         "Intern", back_populates="user", uselist=False
     )
-    supervisor: Mapped[Optional[Supervisor]] = relationship(
+    supervisor: Mapped[Supervisor] = relationship(
         "Supervisor", back_populates="user", uselist=False
     )
-    administrator: Mapped[Optional[Administrator]] = relationship(
+    administrator: Mapped[Administrator] = relationship(
         "Administrator", back_populates="user", uselist=False
     )
     skills: Mapped[List[Skill]] = relationship(
         "Skill", secondary="user_skill", back_populates="users"
     )
-    department: Mapped[Optional[Department]] = relationship(
+    department: Mapped[Department] = relationship(
         "Department", back_populates="users"
     )
     verification_code: Mapped[Optional[VerificationCode]] = relationship(
@@ -123,11 +123,13 @@ class Intern(Base):
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
         unique=True,
     )
-    bio: Mapped[Optional[str]] = mapped_column(Text)
-    supervisor_id: Mapped[str] = mapped_column(
+    supervisor_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("supervisor.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=True,
     )
+    school: Mapped[str] = mapped_column(String, nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(Text)
     start_date: Mapped[Optional[date]] = mapped_column(Date)
     end_date: Mapped[Optional[date]] = mapped_column(Date)
 
@@ -140,6 +142,7 @@ class Intern(Base):
         "Task", secondary="intern_task", back_populates="interns"
     )
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
+
 
 
 class InternTask(Base):
@@ -178,7 +181,9 @@ class Supervisor(Base):
     position: Mapped[Optional[str]] = mapped_column(String)
 
     user: Mapped[User] = relationship("User", back_populates="supervisor")
-    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="supervisor")
+    interns: Mapped[List[Intern]] = relationship(
+        "Intern", back_populates="supervisor"
+)
     projects: Mapped[List[Project]] = relationship(
         "Project", back_populates="supervisor"
     )
@@ -333,7 +338,6 @@ class Task(Base):
     interns: Mapped[List[Intern]] = relationship(
         "Intern", secondary="intern_task", back_populates="tasks"
     )
-    # TODO: Review relationship. One to many? Many to Many?
     notes: Mapped[List[Note]] = relationship("Note", back_populates="task")
 
 

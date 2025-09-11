@@ -28,7 +28,7 @@ class UserRepository:
             .where(
                 or_(self.table.normalized_email == normalize_email(email), self.table.phone_number == phone_number),
             )
-            .options(selectinload(User.verification_code))
+            .options(selectinload(User.verification_code), selectinload(User.intern), selectinload(User.supervisor))
         )
         result: Result = await conn.execute(stmt)
         return result.scalars().first()
@@ -74,7 +74,14 @@ class UserRepository:
             .returning(self.table)
         )
         result: Result[tuple[User]] = await conn.execute(stmt)
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        stmt = (
+            select(User)
+            .where(User.id == user.id)
+            .options(selectinload(User.intern), selectinload(User.supervisor))
+        )
+
+        return (await conn.execute(stmt)).scalar_one_or_none()
 
     async def delete(self, conn: AsyncSession, id_value: str) -> None:
         stmt = delete(self.table).where(self.table.id == id_value)

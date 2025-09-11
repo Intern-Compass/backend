@@ -21,7 +21,7 @@ class UserInModel(BaseModel):
 
 
 class UserOutModel(BaseModel):
-    id: str
+    user_id: str
     firstname: str
     lastname: str
     phone_number: str
@@ -38,7 +38,7 @@ class UserOutModel(BaseModel):
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
         return UserOutModel(
-            id=str(user.id),
+            user_id=str(user.id),
             firstname=user.firstname,
             lastname=user.lastname,
             phone_number=user.phone_number,
