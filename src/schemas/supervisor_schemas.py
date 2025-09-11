@@ -7,6 +7,7 @@ from src.schemas import UserInModel, UserOutModel
 class SupervisorInModel(UserInModel):
     position: str
 
+
 class SupervisorOutModel(UserOutModel):
     supervisor_id: str
     position: str | None
@@ -24,5 +25,5 @@ class SupervisorOutModel(UserOutModel):
             date_of_birth=user.date_of_birth.isoformat(),
             work_location=user.work_location,
             supervisor_id=str(user.supervisor.id),
-            position=user.supervisor.position
+            position=user.supervisor.position,
         )

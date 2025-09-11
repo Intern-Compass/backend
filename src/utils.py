@@ -73,7 +73,9 @@ def get_current_user(
         return payload
     except ExpiredSignatureError as e:
         logger.error(str(e))
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again")
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again"
+        )
     except DecodeError as e:
         logger.error(str(e))
         raise HTTPException(
@@ -98,6 +100,7 @@ def get_supervisor_user(payload: Annotated[dict, Depends(get_current_user)]):
         status_code=HTTP_403_FORBIDDEN,
         detail="Not in supervisor. You cannot access this endpoint.",
     )
+
 
 def normalize_email(email: str) -> str:
     return email.lower().strip()

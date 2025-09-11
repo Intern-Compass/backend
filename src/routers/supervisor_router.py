@@ -10,12 +10,16 @@ router: APIRouter = APIRouter(prefix="/supervisor", tags=["Supervisor"])
 
 """Router concerns everything that has to do with supervisors."""
 
+
 @router.get("/my-interns")
 async def get_interns(
     supervisor_service: Annotated[SupervisorService, Depends()],
     supervisor: Annotated[dict, Depends(get_supervisor_user)],
 ):
-    return await supervisor_service.get_interns(supervisor_id=supervisor.get("supervisor_id"))
+    return await supervisor_service.get_interns(
+        supervisor_id=supervisor.get("supervisor_id")
+    )
+
 
 @router.get("/assign-intern")
 async def assign_intern(

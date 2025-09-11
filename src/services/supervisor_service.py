@@ -18,7 +18,7 @@ class SupervisorService:
         supervisor_service: Annotated[SupervisorRepository, Depends()],
         intern_repo: Annotated[InternRepository, Depends()],
         background_tasks: BackgroundTasks,
-        session: Annotated[AsyncSession, Depends(get_db_session)]
+        session: Annotated[AsyncSession, Depends(get_db_session)],
     ):
         self.supervisor_service = supervisor_service
         self.background_tasks = background_tasks
@@ -28,25 +28,35 @@ class SupervisorService:
     async def get_interns(self, supervisor_id: str):
         print(supervisor_id)
         async with self.session.begin():
-            supervisor: Supervisor = await self.supervisor_service.get_supervisor_details(
-                conn=self.session, supervisor_id=supervisor_id
+            supervisor: Supervisor = (
+                await self.supervisor_service.get_supervisor_details(
+                    conn=self.session, supervisor_id=supervisor_id
+                )
             )
 
         return supervisor.interns
 
     async def assign_intern_to_supervisor(self, supervisor_id: str, intern_id: str):
         async with self.session.begin():
-            existing_intern: Intern|None = await self.intern_repo.get_intern_by_id(
+            existing_intern: Intern | None = await self.intern_repo.get_intern_by_id(
                 conn=self.session, intern_id=intern_id
             )
 
             if not existing_intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
 
             if existing_intern.supervisor_id:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern already assigned to supervisor")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND,
+                    detail="Intern already assigned to supervisor",
+                )
 
             await self.supervisor_service.assign_interns_to_supervisor(
-                conn=self.session, supervisor_id=supervisor_id, interns_to_assign=[existing_intern])
+                conn=self.session,
+                supervisor_id=supervisor_id,
+                interns_to_assign=[existing_intern],
+            )
 
         return InternOutModel.from_intern(existing_intern.user)

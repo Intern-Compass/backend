@@ -84,9 +84,7 @@ class User(Base):
     skills: Mapped[List[Skill]] = relationship(
         "Skill", secondary="user_skill", back_populates="users"
     )
-    department: Mapped[Department] = relationship(
-        "Department", back_populates="users"
-    )
+    department: Mapped[Department] = relationship("Department", back_populates="users")
     verification_code: Mapped[Optional[VerificationCode]] = relationship(
         "VerificationCode", uselist=False, back_populates="user"
     )
@@ -144,7 +142,6 @@ class Intern(Base):
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
 
 
-
 class InternTask(Base):
     __tablename__ = "intern_task"
 
@@ -181,9 +178,7 @@ class Supervisor(Base):
     position: Mapped[Optional[str]] = mapped_column(String)
 
     user: Mapped[User] = relationship("User", back_populates="supervisor")
-    interns: Mapped[List[Intern]] = relationship(
-        "Intern", back_populates="supervisor"
-)
+    interns: Mapped[List[Intern]] = relationship("Intern", back_populates="supervisor")
     projects: Mapped[List[Project]] = relationship(
         "Project", back_populates="supervisor"
     )
@@ -208,15 +203,15 @@ class Administrator(Base):
 class Department(Base):
     __tablename__ = "department"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True, default=uuid4
-    )
+    id: Mapped[int] = mapped_column(primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
 
     # relationships
     users: Mapped[List[User]] = relationship("User", back_populates="department")
-    projects: Mapped[List[Project]] = relationship("Project", back_populates="department")
+    projects: Mapped[List[Project]] = relationship(
+        "Project", back_populates="department"
+    )
 
 
 class Skill(Base):

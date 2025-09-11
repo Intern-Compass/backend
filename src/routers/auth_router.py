@@ -20,7 +20,9 @@ async def create_supervisor(
     create_supervisor_request: SupervisorInModel,
     general_user_service: Annotated[AuthService, Depends()],
 ) -> dict[str, str]:
-    return await general_user_service.create_unverified_new_user(create_supervisor_request)
+    return await general_user_service.create_unverified_new_user(
+        create_supervisor_request
+    )
 
 
 @router.post("/register-intern")
@@ -45,9 +47,7 @@ async def login(
     response: Response,
 ):
     """Logs the intern in and returns access and refresh tokens"""
-    return await auth_service.login(
-        username=form.username, password=form.password
-    )
+    return await auth_service.login(username=form.username, password=form.password)
 
 
 @router.post("/forgot-password")

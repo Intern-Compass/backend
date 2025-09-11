@@ -5,8 +5,12 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_409_CONFLICT, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, \
-    HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (
+    HTTP_409_CONFLICT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from src.repositories.general_user_repo import UserRepository
 from src.models.app_models import User, VerificationCode
@@ -19,7 +23,8 @@ from src.utils import (
     generate_access_token,
     password_is_correct,
     hash_password,
-    generate_random_code, normalize_email,
+    generate_random_code,
+    normalize_email,
 )
 from ..infra.email.contexts import (
     VerifyEmailContext,
@@ -90,7 +95,9 @@ class AuthService:
                         conn=self.session, new_supervisor=new_user
                     )
                 else:
-                    unverified_user: User = await self.user_repo.create_new_user(conn=self.session, new_user=new_user)
+                    unverified_user: User = await self.user_repo.create_new_user(
+                        conn=self.session, new_user=new_user
+                    )
 
                 code = generate_random_code()
                 await self.code_repo.create_code(
@@ -117,7 +124,9 @@ class AuthService:
                 conn=self.session, value=code
             )
             if not verification_code:
-                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code")
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
+                )
 
             verified_user: User = await self.user_repo.update(
                 conn=self.session,
@@ -125,7 +134,10 @@ class AuthService:
                 values={"verified": True},
             )
             if not verified_user:
-                raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong with verification")
+                raise HTTPException(
+                    status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Something went wrong with verification",
+                )
 
             await self.code_repo.delete_code(conn=self.session, value=code)
 
@@ -152,16 +164,24 @@ class AuthService:
             conn=self.session, email=username
         )
         if not existing_user:
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         if not password_is_correct(existing_user.password, password):
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         if not existing_user.verified:
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         if existing_user.type == UserType.SUPERVISOR:
-            user_to_login: UserOutModel = SupervisorOutModel.from_supervisor(existing_user)
+            user_to_login: UserOutModel = SupervisorOutModel.from_supervisor(
+                existing_user
+            )
         elif existing_user.type == UserType.INTERN:
             user_to_login: UserOutModel = InternOutModel.from_intern(existing_user)
         else:

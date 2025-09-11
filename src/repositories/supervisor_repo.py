@@ -17,8 +17,9 @@ class SupervisorRepository:
     def __init__(self):
         self.table = Supervisor
 
-
-    async def create_new_supervisor(self, conn: AsyncSession, new_supervisor: SupervisorInModel):
+    async def create_new_supervisor(
+        self, conn: AsyncSession, new_supervisor: SupervisorInModel
+    ):
         user_id: UUID = uuid4()
         user: User = User(
             id=user_id,
@@ -35,8 +36,8 @@ class SupervisorRepository:
         )
 
         supervisor: Supervisor = self.table(
-            user_id = user_id,
-            position = new_supervisor.position,
+            user_id=user_id,
+            position=new_supervisor.position,
         )
 
         user.supervisor = supervisor
@@ -47,7 +48,9 @@ class SupervisorRepository:
 
         return user
 
-    async def assign_interns_to_supervisor(self, supervisor_id: id, conn: AsyncSession, interns_to_assign: list[Intern]):
+    async def assign_interns_to_supervisor(
+        self, supervisor_id: id, conn: AsyncSession, interns_to_assign: list[Intern]
+    ):
         stmt: Select = (
             select(self.table)
             .where(Supervisor.id == uuid.UUID(supervisor_id))
@@ -69,4 +72,3 @@ class SupervisorRepository:
 
         result: Result = await conn.execute(stmt)
         return result.scalar_one()
-

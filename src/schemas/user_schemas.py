@@ -34,7 +34,6 @@ class UserOutModel(BaseModel):
     class Config:
         use_enum_values = True
 
-
     @classmethod
     def from_user(cls, user: User) -> "UserOutModel":
         return UserOutModel(
@@ -54,8 +53,10 @@ class ResetPasswordRequest(BaseModel):
     code: str
     password: str
 
+
 class UserEmail(BaseModel):
     email: Annotated[str, EmailStr]
+
 
 class VerificationCode(BaseModel):
     code: str

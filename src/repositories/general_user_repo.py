@@ -26,9 +26,16 @@ class UserRepository:
         stmt: Select = (
             select(self.table)
             .where(
-                or_(self.table.normalized_email == normalize_email(email), self.table.phone_number == phone_number),
+                or_(
+                    self.table.normalized_email == normalize_email(email),
+                    self.table.phone_number == phone_number,
+                ),
             )
-            .options(selectinload(User.verification_code), selectinload(User.intern), selectinload(User.supervisor))
+            .options(
+                selectinload(User.verification_code),
+                selectinload(User.intern),
+                selectinload(User.supervisor),
+            )
         )
         result: Result = await conn.execute(stmt)
         return result.scalars().first()
