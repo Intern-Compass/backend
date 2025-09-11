@@ -5,7 +5,11 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_409_CONFLICT, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
+from starlette.status import (
+    HTTP_409_CONFLICT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+)
 
 from src.repositories.general_user_repo import UserRepository
 from src.models.app_models import User, VerificationCode
@@ -13,12 +17,13 @@ from src.db import get_db_session
 from src.repositories.intern_repository import InternRepository
 from src.repositories.verification_code_repo import VerificationCodeRepository
 from src.schemas import UserInModel, InternInModel
-from src.schemas.user_schemas import UserOutModel, UserType
+from src.schemas.user_schemas import UserOutModel
 from src.utils import (
     generate_access_token,
     password_is_correct,
     hash_password,
-    generate_random_code, normalize_email,
+    generate_random_code,
+    normalize_email,
 )
 from ..infra.email.contexts import (
     VerifyEmailContext,
@@ -111,7 +116,9 @@ class AuthService:
                 conn=self.session, value=code
             )
             if not verification_code:
-                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code")
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
+                )
 
             verified_user: User = await self.user_repo.update(
                 conn=self.session,
@@ -138,13 +145,19 @@ class AuthService:
             conn=self.session, email=username
         )
         if not existing_user:
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         if not password_is_correct(existing_user.password, password):
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         if not existing_user.verified:
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials")
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+            )
 
         user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
 
@@ -188,9 +201,6 @@ class AuthService:
                 conn=self.session, email=email
             )
             if not user:
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
                 logger.info(
                     f"No user with email {email} exists to send verification code."
                 )
@@ -206,10 +216,6 @@ class AuthService:
                 send_code = code
                 user_email = user.email
 
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
             elif user and user.verification_code:
                 code = generate_random_code()
                 await self.code_repo.upsert_code_with_user_id(
@@ -219,10 +225,6 @@ class AuthService:
                 send_code = code
                 user_email = user.email
 
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
         if user_email:
             # TODO: Change to ResetPasswordEmailContext
             self.background_task.add_task(
@@ -230,6 +232,9 @@ class AuthService:
                 user_email,
                 context=VerifyEmailContext(send_code=send_code),
             )
+        response = {
+            "detail": "If this email exists, a password reset email will be sent."
+        }
         return response
 
     async def verify_code_and_reset_password(self, code: str, new_password: str):
