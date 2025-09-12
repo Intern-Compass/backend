@@ -31,8 +31,9 @@ from src.utils import (
     decode_token,
     TokenType,
 )
+from src.settings import settings
 from ..infra.email.contexts import (
-    ResetPasswordEmailContext,
+    ForgotPasswordContext,
     VerifyEmailContext,
     EmailVerifiedContext,
     UpdatedUserContext,
@@ -249,7 +250,9 @@ class AuthService:
             self.background_task.add_task(
                 send_email,
                 user_email,
-                context=ResetPasswordEmailContext(token=token),
+                context=ForgotPasswordContext(
+                    reset_link=f"https://{settings.FRONTEND_URL}/reset_link?token={token}"
+                ),
             )
         response = {
             "detail": "If this email exists, a password reset email will be sent."
