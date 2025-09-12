@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+from enum import StrEnum
 from typing import Annotated
 
 import argon2
@@ -116,6 +117,7 @@ def get_supervisor_user(payload: dict):
         status_code=HTTP_403_FORBIDDEN,
         detail="Not in supervisor. You cannot access this endpoint.",
     )
+
 
 def normalize_email(email: str) -> str:
     return email.lower().strip()
