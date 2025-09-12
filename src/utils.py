@@ -19,6 +19,11 @@ from src.settings import settings
 ph: PasswordHasher = PasswordHasher()
 
 
+class TokenType(StrEnum):
+    ACCESS = "access"
+    PASSWORD_RESET = "password_reset"
+
+
 def generate_access_token(user_to_login: UserOutModel) -> str:
     payload: dict = {
         "sub": user_to_login.id,
