@@ -10,6 +10,7 @@ from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
 )
+from jwt.exceptions import ExpiredSignatureError, DecodeError
 
 from src.repositories.general_user_repo import UserRepository
 from src.models.app_models import User, VerificationCode
@@ -25,6 +26,8 @@ from src.utils import (
     generate_random_code,
     normalize_email,
     generate_password_reset_token,
+    decode_token,
+    TokenType,
 )
 from ..infra.email.contexts import (
     ResetPasswordEmailContext,
@@ -218,24 +221,28 @@ class AuthService:
         }
         return response
 
-    async def verify_code_and_reset_password(self, code: str, new_password: str):
-        async with self.session.begin():
-            verified_code: bool | VerificationCode = await self._verify_code(
-                code=code, conn=self.session
-            )
+    async def verify_token_and_reset_password(self, token: str, new_password: str):
+        e = HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
+        )
+        try:
+            payload = decode_token(token)
+        except (ExpiredSignatureError, DecodeError):
+            raise e
+        else:
+            if any(
+                [(not payload["sub"]), (payload["type"] != TokenType.PASSWORD_RESET)]
+            ):
+                raise e
+            user_id = payload["sub"]
 
-            if not verified_code:
-                raise HTTPException(
-                    status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
-                )
-
-            new_password: str = hash_password(new_password)
-            values_to_update: dict = {"password": new_password}
-            updated_user: User = await self.user_repo.update(
-                conn=self.session,
-                user_id=verified_code.user_id,
-                values=values_to_update,
-            )
+        new_password: str = hash_password(new_password)
+        values_to_update: dict = {"password": new_password}
+        updated_user: User = await self.user_repo.update(
+            conn=self.session,
+            user_id=user_id,
+            values=values_to_update,
+        )
 
         self.background_task.add_task(
             send_email,
