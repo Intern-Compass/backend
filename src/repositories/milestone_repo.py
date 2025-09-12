@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Milestone
-from src.schemas.milestone_schemas import MilestoneInModel
+from ..models.app_models import Milestone
+from ..schemas.milestone_schemas import MilestoneInModel
 
 
 class MilestoneRepository:

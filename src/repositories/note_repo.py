@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Note
-from src.schemas.note_schemas import NoteInModel
+from ..models.app_models import Note
+from ..schemas.note_schemas import NoteInModel
 
 
 class NoteRepository:

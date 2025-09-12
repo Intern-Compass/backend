@@ -21,7 +21,7 @@ class UpdatedUserContext(EmailContext):
     __template_path__: str = "updated_user.html"
     __subject__: str = "One or more of account details have been changed"
 
-    values_updated: dict
+    values_updated: list
 
 
 @dataclass(kw_only=True)

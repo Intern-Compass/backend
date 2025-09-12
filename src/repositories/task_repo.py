@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Task, InternTask
-from src.schemas.task_schemas import TaskInModel
+from ..models.app_models import Task, InternTask
+from ..schemas.task_schemas import TaskInModel
 
 
 class TaskRepository:
