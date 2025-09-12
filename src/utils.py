@@ -21,8 +21,8 @@ ph: PasswordHasher = PasswordHasher()
 
 def generate_access_token(user_to_login: UserOutModel) -> str:
     payload: dict = {
-        "sub": user_to_login.id,
-        **user_to_login.model_dump(exclude={"id"}),
+        "sub": user_to_login.user_id,
+        **user_to_login.model_dump(exclude={"user_id"}),
         "exp": (datetime.now() + timedelta(minutes=60)),
     }
 
@@ -73,11 +73,13 @@ def get_current_user(
         return payload
     except ExpiredSignatureError as e:
         logger.error(str(e))
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Token expired")
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again"
+        )
     except DecodeError as e:
         logger.error(str(e))
         raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED, detail="Token not provided."
+            status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again."
         )
 
 
@@ -91,7 +93,7 @@ def get_intern_user(payload: Annotated[dict, Depends(get_current_user)]):
     )
 
 
-def get_supervisor_user(payload: dict):
+def get_supervisor_user(payload: Annotated[dict, Depends(get_current_user)]):
     if payload.get("type") == UserType.SUPERVISOR:
         return payload
     raise HTTPException(
@@ -99,5 +101,6 @@ def get_supervisor_user(payload: dict):
         detail="Not in supervisor. You cannot access this endpoint.",
     )
 
-def normalize_email(email: str) -> str:
-    return email.lower().strip()
+
+def normalize_string(string: str) -> str:
+    return string.lower().strip()

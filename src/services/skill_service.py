@@ -30,7 +30,9 @@ class SkillService:
                     conn=self.session, user_id=user_id, skills=skills
                 )
             except IntegrityError:
-                raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Skills already exist")
+                raise HTTPException(
+                    status_code=HTTP_409_CONFLICT, detail="Skills already exist"
+                )
 
         return new_skills
 
@@ -46,6 +48,8 @@ class SkillService:
                     conn=self.session, skill=skill
                 )
         except IntegrityError:
-            raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Skill already exists")
+            raise HTTPException(
+                status_code=HTTP_409_CONFLICT, detail="Skill already exists"
+            )
 
         return skill

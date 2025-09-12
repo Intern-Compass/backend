@@ -1,9 +1,15 @@
 __pycache__/
 .idea/
 internship_matching_platform.db
+.env.*
 .env
 .venv/
 .log
 logs/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
 docker-compose.override.yml
 _scripts/
