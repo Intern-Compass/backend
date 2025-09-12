@@ -24,8 +24,10 @@ from src.utils import (
     hash_password,
     generate_random_code,
     normalize_email,
+    generate_password_reset_token,
 )
 from ..infra.email.contexts import (
+    ResetPasswordEmailContext,
     VerifyEmailContext,
     EmailVerifiedContext,
     UpdatedUserContext,
@@ -200,37 +202,16 @@ class AuthService:
             user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session, email=email
             )
-            if not user:
-                logger.info(
-                    f"No user with email {email} exists to send verification code."
-                )
+        if not user:
+            logger.info(f"No user with email {email} exists to send verification code.")
 
-            user_email: str | None = None
-            send_code: str | None = None
-
-            if user and not user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.create_code(
-                    conn=self.session, user_id=user.id, code=code
-                )
-                send_code = code
-                user_email = user.email
-
-            elif user and user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.upsert_code_with_user_id(
-                    conn=self.session, user_id=user.id, value=code
-                )
-
-                send_code = code
-                user_email = user.email
-
-        if user_email:
-            # TODO: Change to ResetPasswordEmailContext
+        if user:
+            token = generate_password_reset_token(user.email)
+            user_email = user.email
             self.background_task.add_task(
                 send_email,
                 user_email,
-                context=VerifyEmailContext(send_code=send_code),
+                context=ResetPasswordEmailContext(token=token),
             )
         response = {
             "detail": "If this email exists, a password reset email will be sent."
