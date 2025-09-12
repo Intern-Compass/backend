@@ -6,9 +6,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
+from src.routers.supervisor_router import router as supervisor_router
 from src.routers.auth_router import router as auth_router
 from src.routers.skill_router import router as skill_router
-from src.routers.intern_router import router as intern_router
 
 from src.logger import logger
 
@@ -51,4 +51,4 @@ async def greet():
 
 app.include_router(auth_router)
 app.include_router(skill_router)
-app.include_router(intern_router)
+app.include_router(supervisor_router)

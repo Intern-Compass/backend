@@ -7,6 +7,7 @@ from starlette.responses import Response
 
 from src.schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
+from src.schemas.supervisor_schemas import SupervisorInModel
 from src.schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
 from src.services import AuthService
 
@@ -16,10 +17,12 @@ router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
 
 @router.post("/register-supervisor")
 async def create_supervisor(
-    create_user_request: UserInModel,
+    create_supervisor_request: SupervisorInModel,
     general_user_service: Annotated[AuthService, Depends()],
 ) -> dict[str, str]:
-    return await general_user_service.create_unverified_new_user(create_user_request)
+    return await general_user_service.create_unverified_new_user(
+        create_supervisor_request
+    )
 
 
 @router.post("/register-intern")
@@ -44,9 +47,7 @@ async def login(
     response: Response,
 ):
     """Logs the intern in and returns access and refresh tokens"""
-    return await auth_service.login(
-        username=form.username, password=form.password
-    )
+    return await auth_service.login(username=form.username, password=form.password)
 
 
 @router.post("/forgot-password")
