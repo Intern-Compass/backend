@@ -206,7 +206,7 @@ class AuthService:
             logger.info(f"No user with email {email} exists to send verification code.")
 
         if user:
-            token = generate_password_reset_token(user.email)
+            token = generate_password_reset_token(user.id)
             user_email = user.email
             self.background_task.add_task(
                 send_email,

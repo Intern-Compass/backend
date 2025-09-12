@@ -38,9 +38,9 @@ def generate_access_token(user_to_login: UserOutModel) -> str:
     return access_token
 
 
-def generate_password_reset_token(user_email: str) -> str:
+def generate_password_reset_token(user_id) -> str:
     payload: dict = {
-        "sub": user_email,
+        "sub": user_id,
         "type": TokenType.PASSWORD_RESET,
         "exp": (datetime.now() + timedelta(hours=2)),
     }
