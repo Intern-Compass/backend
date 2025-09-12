@@ -7,3 +7,4 @@ internship_matching_platform.db
 logs/
 docker-compose.override.yml
 _scripts/
+_TODO
