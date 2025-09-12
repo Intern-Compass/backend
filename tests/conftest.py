@@ -1,6 +1,7 @@
 """
 Global test configuration and fixtures.
 """
+
 import asyncio
 from typing import AsyncGenerator
 
@@ -27,7 +28,8 @@ TestingAsyncSessionLocal = async_sessionmaker(
 
 # --- Database Fixtures ---
 
-@pytest_asyncio.fixture(scope="session") # Issues with scoping fixtures
+
+@pytest_asyncio.fixture(scope="session")  # Issues with scoping fixtures
 async def manage_db_schema() -> AsyncGenerator[None, None]:
     """
     Fixture to create and drop the test database schema for the entire test session.
@@ -35,20 +37,22 @@ async def manage_db_schema() -> AsyncGenerator[None, None]:
     async with engine.begin() as conn:
         # Create all tables defined in app_models (from Base.metadata)
         await conn.run_sync(Base.metadata.create_all)
-    
-    yield # Tests run here
+
+    yield  # Tests run here
 
     async with engine.begin() as conn:
         # Drop all tables after the test session is complete
         await conn.run_sync(Base.metadata.drop_all)
 
-@pytest_asyncio.fixture(scope="function") # Issues with scoping fixtures
+
+@pytest_asyncio.fixture(scope="function")  # Issues with scoping fixtures
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Fixture to provide a clean database session for each test function.
     """
     async with TestingAsyncSessionLocal() as session:
         yield session
+
 
 # --- Application Fixtures ---
 """

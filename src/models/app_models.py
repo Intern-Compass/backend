@@ -218,10 +218,7 @@ class Department(Base):
 
 
 class Skill(Base):
-    __repr_attrs__ = (
-        "id",
-        "name"
-    )
+    __repr_attrs__ = ("id", "name")
 
     __tablename__ = "skill"
 

@@ -97,8 +97,12 @@ class AuthService:
                         conn=self.session, new_intern=new_user, user=unverified_user
                     )
                 elif isinstance(new_user, SupervisorInModel):
-                    unverified_user: User = await self.supervisor_repo.create_new_supervisor(
-                        conn=self.session, new_supervisor=new_user, user=unverified_user
+                    unverified_user: User = (
+                        await self.supervisor_repo.create_new_supervisor(
+                            conn=self.session,
+                            new_supervisor=new_user,
+                            user=unverified_user,
+                        )
                     )
 
                 code = generate_random_code()
@@ -160,10 +164,7 @@ class AuthService:
             user_normalized_email,
             context=EmailVerifiedContext(),
         )
-        return {
-            "access_token": access_token,
-            "token_type": "Bearer"
-        }
+        return {"access_token": access_token, "token_type": "Bearer"}
 
     async def login(self, username: str, password: str):
         existing_user: User = await self.user_repo.get_user_by_email_or_phone(

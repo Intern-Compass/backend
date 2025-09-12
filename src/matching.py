@@ -1,4 +1,5 @@
-""" Testing the supervisor service class methods"""
+"""Testing the supervisor service class methods"""
+
 from collections import defaultdict
 
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ from icecream import ic
 from src.models.app_models import Intern, Supervisor
 
 load_dotenv()
+
 
 def skills_similarity(intern_skills: list, supervisor_skills: list):
     """
@@ -36,10 +38,14 @@ def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
 
     return dict(matches_)
 
+
 def run_matching(all_supervisors, all_interns):
     results = {}
     # collating all department as a union set of all departments
-    departments = set([s["department"] for s in all_supervisors] + [i["department"] for i in all_interns])
+    departments = set(
+        [s["department"] for s in all_supervisors]
+        + [i["department"] for i in all_interns]
+    )
 
     for dept in departments:
         # Performing matching by department to ensure only people of the same department gets matched
@@ -49,31 +55,27 @@ def run_matching(all_supervisors, all_interns):
 
     return results
 
+
 async def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     # Expected data structure for matching
-    supervisors_details: list[
-        dict[str, int | str | list[str]]
-    ] = [
+    supervisors_details: list[dict[str, int | str | list[str]]] = [
         {
             "id": str(supervisor.id),
             "department": supervisor.user.department.name,
-            "skills": [skill.name for skill in supervisor.skills]
+            "skills": [skill.name for skill in supervisor.skills],
         }
         for supervisor in supervisors
     ]
 
-    interns_details: list[
-        dict[str, int | str | list[str]]
-    ] = [
+    interns_details: list[dict[str, int | str | list[str]]] = [
         {
             "id": str(intern.id),
             "department": intern.user.department.name,
-            "skills": [skill.name for skill in intern.skills]
+            "skills": [skill.name for skill in intern.skills],
         }
         for intern in interns
     ]
 
     matches = run_matching(supervisors_details, interns_details)
-    ic(matches) # For debugging
+    ic(matches)  # For debugging
     return matches
-

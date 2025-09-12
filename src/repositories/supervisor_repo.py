@@ -52,11 +52,10 @@ class SupervisorRepository:
             select(Supervisor)
             .where(self.table.id == uuid.UUID(supervisor_id))
             .options(
-
                 selectinload(Supervisor.user),
                 selectinload(Supervisor.user).selectinload(User.skills),
                 selectinload(Supervisor.interns),
-                selectinload(Supervisor.interns).selectinload(Intern.user)
+                selectinload(Supervisor.interns).selectinload(Intern.user),
             )
         )
 
@@ -64,15 +63,11 @@ class SupervisorRepository:
         return result.scalar_one()
 
     async def get_supervisors_details(self, conn):
-        stmt: Select = (
-            select(self.table)
-            .options(
-                selectinload(Supervisor.interns),
-                selectinload(Supervisor.user),
-                selectinload(Supervisor.user).selectinload(User.skills),
-                selectinload(Supervisor.user).selectinload(User.department)
-
-            )
+        stmt: Select = select(self.table).options(
+            selectinload(Supervisor.interns),
+            selectinload(Supervisor.user),
+            selectinload(Supervisor.user).selectinload(User.skills),
+            selectinload(Supervisor.user).selectinload(User.department),
         )
 
         result: Result = await conn.execute(stmt)

@@ -12,8 +12,6 @@ from ..repositories.supervisor_repo import SupervisorRepository
 from ..schemas.intern_schemas import InternOutModel
 
 
-
-
 class SupervisorService:
     def __init__(
         self,
@@ -30,10 +28,8 @@ class SupervisorService:
     async def get_interns(self, supervisor_id: str):
         # TODO: IMPORTANT Fix the loading of relationships
         async with self.session.begin():
-            supervisor: Supervisor = (
-                await self.supervisor_repo.get_supervisor_details(
-                    conn=self.session, supervisor_id=supervisor_id
-                )
+            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
+                conn=self.session, supervisor_id=supervisor_id
             )
 
         return [InternOutModel.from_user(intern.user) for intern in supervisor.interns]
@@ -61,23 +57,22 @@ class SupervisorService:
                 interns_to_assign=[existing_intern],
             )
 
-        print({"detail": f"{existing_intern.user.email} has been assigned a supervisor"})
+        print(
+            {"detail": f"{existing_intern.user.email} has been assigned a supervisor"}
+        )
 
     async def get_supervisor(self, supervisor_id: str):
         async with self.session.begin():
-            supervisor: Supervisor = (
-                await self.supervisor_repo.get_supervisor_details(
-                    conn=self.session, supervisor_id=supervisor_id
-                )
+            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
+                conn=self.session, supervisor_id=supervisor_id
             )
 
         return supervisor
 
     async def get_supervisors(self):
         async with self.session.begin():
-            supervisors: list[Supervisor] = await self.supervisor_repo.get_supervisors_details(conn=self.session)
+            supervisors: list[
+                Supervisor
+            ] = await self.supervisor_repo.get_supervisors_details(conn=self.session)
 
         return supervisors
-
-
-

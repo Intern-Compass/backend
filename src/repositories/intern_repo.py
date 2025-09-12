@@ -44,20 +44,17 @@ class InternRepository:
             .options(
                 selectinload(Intern.user),
                 selectinload(Intern.user).selectinload(User.skills),
-                selectinload(Intern.user).selectinload(User.department)
+                selectinload(Intern.user).selectinload(User.department),
             )
         )
         result: Result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_interns(self, conn):
-        stmt: Select = (
-            select(self.table)
-            .options(
-                selectinload(Intern.user),
-                selectinload(Intern.user).selectinload(User.skills),
-                selectinload(Intern.user).selectinload(User.department)
-            )
+        stmt: Select = select(self.table).options(
+            selectinload(Intern.user),
+            selectinload(Intern.user).selectinload(User.skills),
+            selectinload(Intern.user).selectinload(User.department),
         )
         result: Result = await conn.execute(stmt)
 
@@ -69,31 +66,30 @@ class InternRepository:
             .where(Intern.supervisor_id == None)
             .options(
                 selectinload(Intern.user).selectinload(User.skills),
-                selectinload(Intern.user).selectinload(User.department)
-            ))
+                selectinload(Intern.user).selectinload(User.department),
+            )
+        )
 
         result: Result = await conn.execute(stmt)
 
         return result.scalars().all()
 
-    async def assign_supervisor_to_intern(self, conn: AsyncSession, supervisor_id: str, intern_id: str):
+    async def assign_supervisor_to_intern(
+        self, conn: AsyncSession, supervisor_id: str, intern_id: str
+    ):
         intern_select: Select = (
             select(self.table)
             .where(
-                and_(
-                    Intern.id == uuid.UUID(intern_id),
-                    Intern.supervisor_id == None
-                )
+                and_(Intern.id == uuid.UUID(intern_id), Intern.supervisor_id == None)
             )
             .options(
                 selectinload(Intern.user).selectinload(User.skills),
-                selectinload(Intern.user).selectinload(User.department)
+                selectinload(Intern.user).selectinload(User.department),
             )
         )
 
-        supervisor_select: Select = (
-            select(Supervisor)
-            .where(Supervisor.id == uuid.UUID(supervisor_id))
+        supervisor_select: Select = select(Supervisor).where(
+            Supervisor.id == uuid.UUID(supervisor_id)
         )
 
         try:
@@ -107,4 +103,3 @@ class InternRepository:
         await conn.flush()
 
         return intern_result
-

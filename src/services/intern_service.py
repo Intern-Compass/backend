@@ -5,6 +5,7 @@ This module will handle:
     - Viewing tasks assigned by the supervisor
     Anything else the intern_auth router might need
 """
+
 from typing import Annotated
 
 from fastapi.params import Depends
@@ -28,7 +29,6 @@ class InternService:
         self.intern_repo = intern_repo
         self.supervisor_repo = supervisor_repo
 
-
     async def get_intern(self, intern_id: str):
         async with self.session.begin():
             intern = await self.intern_repo.get_intern_by_id(
@@ -39,13 +39,17 @@ class InternService:
 
     async def get_interns(self):
         async with self.session.begin():
-            interns: list[Intern] = await self.intern_repo.get_interns(conn=self.session)
+            interns: list[Intern] = await self.intern_repo.get_interns(
+                conn=self.session
+            )
 
         return interns
 
     async def get_unmatched_interns(self):
         async with self.session.begin():
-            unmatched_interns: list[Intern] = await self.intern_repo.get_unmatched_interns(conn=self.session)
+            unmatched_interns: list[
+                Intern
+            ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
 
         return unmatched_interns
 
@@ -57,8 +61,7 @@ class InternService:
             supervisor_id = intern.supervisor_id
 
             supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
-                conn=self.session,
-                supervisor_id=str(supervisor_id)
+                conn=self.session, supervisor_id=str(supervisor_id)
             )
 
             return SupervisorOutModel.from_supervisor(supervisor.user)

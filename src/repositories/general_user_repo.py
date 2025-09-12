@@ -40,7 +40,9 @@ class UserRepository:
         result: Result = await conn.execute(stmt)
         return result.scalars().first()
 
-    async def create_new_user(self, new_user: UserInModel, conn: AsyncSession, skill_repo: SkillRepository) -> User:
+    async def create_new_user(
+        self, new_user: UserInModel, conn: AsyncSession, skill_repo: SkillRepository
+    ) -> User:
         user: User = self.table(
             firstname=new_user.firstname,
             lastname=new_user.lastname,
@@ -54,11 +56,7 @@ class UserRepository:
             department_id=new_user.department.value,
         )
         skill_list = [
-            (
-                await skill_repo.create_or_get_skill(
-                    conn=conn, skill_name=skill.name
-                )
-            )
+            (await skill_repo.create_or_get_skill(conn=conn, skill_name=skill.name))
             for skill in new_user.skills
         ]
         user.skills = skill_list

@@ -34,7 +34,11 @@ class SkillRepository:
         self, conn: AsyncSession, user_id: UUID, skills: list[SkillCreate]
     ):
         skill_list = [
-            (await self.create_or_get_skill(conn=conn, skill_name=normalize_string(skill.name)))
+            (
+                await self.create_or_get_skill(
+                    conn=conn, skill_name=normalize_string(skill.name)
+                )
+            )
             for skill in skills
         ]
 
