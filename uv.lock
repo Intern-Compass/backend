@@ -7,6 +7,15 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "abs2rel"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/bd/a29951577d9cc64c5b3ea9424f7f400e8692c894c2761efd566c8c939823/abs2rel-1.1.0.tar.gz", hash = "sha256:62fba488bb495e373cf8884d70ea52469ba9106adc2052beee16a4356837dae3", size = 5521, upload-time = "2022-09-06T19:12:18.763Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/b7/fad554f7cd8285762be2972825bc93564b47cd6832a060e502576689c1da/abs2rel-1.1.0-py3-none-any.whl", hash = "sha256:1df97db8152e896aa651ad82dc14d20688dbb1dd93cff76f29ef8448f5b83aa6", size = 5682, upload-time = "2022-09-06T19:12:17.572Z" },
+]
+
+[[package]]
 name = "aiosmtplib"
 version = "4.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -135,6 +144,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asttokens"
+version = "3.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/e7/82da0a03e7ba5141f05cce0d302e6eed121ae055e0456ca228bf693984bc/asttokens-3.0.0.tar.gz", hash = "sha256:0dcd8baa8d62b0c1d118b399b2ddba3c4aff271d0d7a9e0d4c1681c79035bbc7", size = 61978, upload-time = "2024-11-30T04:30:14.439Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/8a/c46dcc25341b5bce5472c718902eb3d38600a903b14fa6aeecef3f21a46f/asttokens-3.0.0-py3-none-any.whl", hash = "sha256:e3078351a059199dd5138cb1c706e6430c05eff2ff136af5eb4790f9d28932e2", size = 26918, upload-time = "2024-11-30T04:30:10.946Z" },
+]
+
+[[package]]
 name = "asyncpg"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -228,6 +246,15 @@ wheels = [
 ]
 
 [[package]]
+name = "executing"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/28/c14e053b6762b1044f34a13aab6859bbf40456d37d23aa286ac24cfd9a5d/executing-2.2.1.tar.gz", hash = "sha256:3632cc370565f6648cc328b32435bd120a1e4ebb20c77e3fdde9a13cd1e533c4", size = 1129488, upload-time = "2025-09-01T09:48:10.866Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl", hash = "sha256:760643d3452b4d777d295bb167ccc74c64a81df23fb5e08eff250c425a4b2017", size = 28317, upload-time = "2025-09-01T09:48:08.5Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.116.1"
 source = { registry = "https://pypi.org/simple" }
@@ -275,6 +302,21 @@ wheels = [
 ]
 
 [[package]]
+name = "icecream"
+version = "2.1.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asttokens" },
+    { name = "colorama" },
+    { name = "executing" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a2/d0/738341f0a3636a8e4bc798b98b9e0594d0de894e85208af43a6a05b9db44/icecream-2.1.7.tar.gz", hash = "sha256:936df053e65ff3c7a219fa79311b32bdae19aad83dd2e23d153ab8864b78acd9", size = 17355, upload-time = "2025-08-17T16:02:12.342Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/ae/7abd8d0db31ffafdc5088db7297d6fa14de53cb7daf6da21b4794a7567ce/icecream-2.1.7-py3-none-any.whl", hash = "sha256:b52cdd40cb5080279c4534fcd77aa510b1e7397a687e9d4daf2f8d2028bd738c", size = 14942, upload-time = "2025-08-17T16:02:11.468Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -288,12 +330,14 @@ name = "internship-matching-platform"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "abs2rel" },
     { name = "aiosmtplib" },
     { name = "aiosqlite" },
     { name = "alembic" },
     { name = "argon2-cffi" },
     { name = "asyncpg" },
     { name = "fastapi" },
+    { name = "icecream" },
     { name = "jinja2" },
     { name = "orjson" },
     { name = "psycopg", extra = ["binary"] },
@@ -309,12 +353,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "abs2rel", specifier = ">=1.1.0" },
     { name = "aiosmtplib", specifier = ">=4.0.2" },
     { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "argon2-cffi", specifier = ">=25.1.0" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "fastapi", specifier = ">=0.116.1" },
+    { name = "icecream", specifier = ">=2.1.7" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "orjson", specifier = ">=3.11.3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
@@ -546,6 +592,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/68/85/1ea668bbab3c50071ca613c6ab30047fb36ab0da1b92fa8f17bbc38fd36c/pydantic_settings-2.10.1.tar.gz", hash = "sha256:06f0062169818d0f5524420a360d632d5857b83cffd4d42fe29597807a1614ee", size = 172583, upload-time = "2025-06-24T13:26:46.841Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/58/f0/427018098906416f580e3cf1366d3b1abfb408a0652e9f31600c24a1903c/pydantic_settings-2.10.1-py3-none-any.whl", hash = "sha256:a60952460b99cf661dc25c29c0ef171721f98bfcb52ef8d9ea4c943d7c8cc796", size = 45235, upload-time = "2025-06-24T13:26:45.485Z" },
+]
+
+[[package]]
+name = "pygments"
+version = "2.19.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
 ]
 
 [[package]]

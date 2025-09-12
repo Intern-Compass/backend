@@ -5,11 +5,12 @@ from sqlalchemy import Select, select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from . import SkillRepository
 from ..common import UserType
 from ..models import User
 from ..models.app_models import Supervisor, Intern
 from ..schemas.supervisor_schemas import SupervisorInModel
-from ..utils import normalize_email
+from ..utils import normalize_string
 
 
 class SupervisorRepository:
@@ -17,25 +18,9 @@ class SupervisorRepository:
         self.table = Supervisor
 
     async def create_new_supervisor(
-        self, conn: AsyncSession, new_supervisor: SupervisorInModel
+        self, conn: AsyncSession, new_supervisor: SupervisorInModel, user: User
     ):
-        user_id: UUID = uuid4()
-        user: User = User(
-            id=user_id,
-            firstname=new_supervisor.firstname,
-            lastname=new_supervisor.lastname,
-            email=new_supervisor.email,
-            normalized_email=normalize_email(new_supervisor.email),
-            phone_number=new_supervisor.phone_number,
-            password=new_supervisor.password,
-            date_of_birth=new_supervisor.date_of_birth,
-            work_location=new_supervisor.work_location,
-            type=UserType.SUPERVISOR,
-            department_id=new_supervisor.department.value,
-        )
-
         supervisor: Supervisor = self.table(
-            user_id=user_id,
             position=new_supervisor.position,
         )
 
@@ -66,8 +51,29 @@ class SupervisorRepository:
         stmt: Select = (
             select(Supervisor)
             .where(self.table.id == uuid.UUID(supervisor_id))
-            .options(selectinload(Supervisor.interns))
+            .options(
+
+                selectinload(Supervisor.user),
+                selectinload(Supervisor.user).selectinload(User.skills),
+                selectinload(Supervisor.interns),
+                selectinload(Supervisor.interns).selectinload(Intern.user)
+            )
         )
 
         result: Result = await conn.execute(stmt)
         return result.scalar_one()
+
+    async def get_supervisors_details(self, conn):
+        stmt: Select = (
+            select(self.table)
+            .options(
+                selectinload(Supervisor.interns),
+                selectinload(Supervisor.user),
+                selectinload(Supervisor.user).selectinload(User.skills),
+                selectinload(Supervisor.user).selectinload(User.department)
+
+            )
+        )
+
+        result: Result = await conn.execute(stmt)
+        return result.scalars().all()

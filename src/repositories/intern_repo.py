@@ -2,48 +2,29 @@ import uuid
 
 from typing import Annotated
 
+import sqlalchemy.exc
 from fastapi.params import Depends
-from sqlalchemy import Select, select, Result
+from sqlalchemy import Select, select, Result, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.app_models import Intern, User
+from ..models.app_models import Intern, User, Supervisor
 from ..repositories import SkillRepository
 from ..schemas.intern_schemas import InternInModel
 from ..schemas.user_schemas import UserType
-from ..utils import normalize_email
+from ..utils import normalize_string
 
 
 class InternRepository:
-    def __init__(self, skill_repo: Annotated[SkillRepository, Depends()]):
+    def __init__(self):
         self.table = Intern
-        self.skill_repo = skill_repo
 
     async def create_new_intern(
-        self, conn: AsyncSession, new_intern: InternInModel
+        self,
+        conn: AsyncSession,
+        new_intern: InternInModel,
+        user: User,
     ) -> User:
-        user: User = User(
-            firstname=new_intern.firstname,
-            lastname=new_intern.lastname,
-            email=new_intern.email,
-            normalized_email=normalize_email(new_intern.email),
-            phone_number=new_intern.phone_number,
-            password=new_intern.password,
-            date_of_birth=new_intern.date_of_birth,
-            work_location=new_intern.work_location,
-            type=UserType.INTERN,
-            department_id=new_intern.department.value,
-        )
-        skill_list = [
-            (
-                await self.skill_repo.create_or_get_skill(
-                    conn=conn, skill_name=skill.name
-                )
-            )
-            for skill in new_intern.skills
-        ]
-        user.skills = skill_list
-
         intern: Intern = self.table(
             bio=new_intern.bio,
             school=new_intern.school,
@@ -51,7 +32,6 @@ class InternRepository:
             end_date=new_intern.internship_end_date,
         )
         user.intern = intern
-
         conn.add(user)
         await conn.flush()
 
@@ -61,8 +41,70 @@ class InternRepository:
         stmt: Select = (
             select(self.table)
             .where(self.table.id == uuid.UUID(intern_id))
-            .options(selectinload(Intern.user))
+            .options(
+                selectinload(Intern.user),
+                selectinload(Intern.user).selectinload(User.skills),
+                selectinload(Intern.user).selectinload(User.department)
+            )
+        )
+        result: Result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_interns(self, conn):
+        stmt: Select = (
+            select(self.table)
+            .options(
+                selectinload(Intern.user),
+                selectinload(Intern.user).selectinload(User.skills),
+                selectinload(Intern.user).selectinload(User.department)
+            )
         )
         result: Result = await conn.execute(stmt)
 
-        return result.scalar_one_or_none()
+        return result.scalars().all()
+
+    async def get_unmatched_interns(self, conn: AsyncSession):
+        stmt: Select = (
+            select(self.table)
+            .where(Intern.supervisor_id == None)
+            .options(
+                selectinload(Intern.user).selectinload(User.skills),
+                selectinload(Intern.user).selectinload(User.department)
+            ))
+
+        result: Result = await conn.execute(stmt)
+
+        return result.scalars().all()
+
+    async def assign_supervisor_to_intern(self, conn: AsyncSession, supervisor_id: str, intern_id: str):
+        intern_select: Select = (
+            select(self.table)
+            .where(
+                and_(
+                    Intern.id == uuid.UUID(intern_id),
+                    Intern.supervisor_id == None
+                )
+            )
+            .options(
+                selectinload(Intern.user).selectinload(User.skills),
+                selectinload(Intern.user).selectinload(User.department)
+            )
+        )
+
+        supervisor_select: Select = (
+            select(Supervisor)
+            .where(Supervisor.id == uuid.UUID(supervisor_id))
+        )
+
+        try:
+            intern_result: Intern = (await conn.execute(intern_select)).scalar_one()
+        except sqlalchemy.exc.NoResultFound:
+            raise ValueError("Intern does not exist")
+
+        supervisor_result = (await conn.execute(supervisor_select)).scalar_one()
+        intern_result.supervisor = supervisor_result
+
+        await conn.flush()
+
+        return intern_result
+

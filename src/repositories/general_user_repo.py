@@ -4,9 +4,10 @@ from sqlalchemy import Select, select, Result, update, delete, or_, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.app_models import User, Skill
+from .skill_repo import SkillRepository
+from ..models.app_models import User
 from ..schemas.user_schemas import UserType, UserInModel
-from ..utils import normalize_email
+from ..utils import normalize_string
 
 
 class UserRepository:
@@ -26,7 +27,7 @@ class UserRepository:
             select(self.table)
             .where(
                 or_(
-                    self.table.normalized_email == normalize_email(email),
+                    self.table.normalized_email == normalize_string(email),
                     self.table.phone_number == phone_number,
                 ),
             )
@@ -39,20 +40,28 @@ class UserRepository:
         result: Result = await conn.execute(stmt)
         return result.scalars().first()
 
-    async def create_new_user(self, new_user: UserInModel, conn: AsyncSession) -> User:
+    async def create_new_user(self, new_user: UserInModel, conn: AsyncSession, skill_repo: SkillRepository) -> User:
         user: User = self.table(
             firstname=new_user.firstname,
             lastname=new_user.lastname,
             phone_number=new_user.phone_number,
             email=new_user.email,
-            normalized_email=normalize_email(new_user.email),
+            normalized_email=normalize_string(new_user.email),
             password=new_user.password,
             date_of_birth=new_user.date_of_birth,
             work_location=new_user.work_location,
             type=UserType.SUPERVISOR,
             department_id=new_user.department.value,
         )
-        user.skills = [Skill(name=skill.name) for skill in new_user.skills]
+        skill_list = [
+            (
+                await skill_repo.create_or_get_skill(
+                    conn=conn, skill_name=skill.name
+                )
+            )
+            for skill in new_user.skills
+        ]
+        user.skills = skill_list
 
         conn.add(user)
         await conn.flush()

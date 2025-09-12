@@ -102,5 +102,5 @@ def get_supervisor_user(payload: Annotated[dict, Depends(get_current_user)]):
     )
 
 
-def normalize_email(email: str) -> str:
-    return email.lower().strip()
+def normalize_string(string: str) -> str:
+    return string.lower().strip()

@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from ..models import User
 from ..models.app_models import Skill
 from ..schemas.skill_schemas import SkillCreate
+from ..utils import normalize_string
 
 
 class SkillRepository:
@@ -33,7 +34,7 @@ class SkillRepository:
         self, conn: AsyncSession, user_id: UUID, skills: list[SkillCreate]
     ):
         skill_list = [
-            (await self.create_or_get_skill(conn=conn, skill_name=skill.name))
+            (await self.create_or_get_skill(conn=conn, skill_name=normalize_string(skill.name)))
             for skill in skills
         ]
 
@@ -65,7 +66,6 @@ class SkillRepository:
 
         return skill_list
 
-    # TODO: maybe add a caching layer
     async def get_available_skills(
         self, conn: AsyncSession, search_term: str | None = None
     ):

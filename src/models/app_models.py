@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, Text, Date, DateTime, ForeignKey, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship, Mapped, mapped_column, DeclarativeBase
 
 from ..common import UserType
@@ -136,6 +137,7 @@ class Intern(Base):
     supervisor: Mapped[Supervisor] = relationship(
         "Supervisor", back_populates="interns"
     )
+    skills: Mapped[List[Skill]] = association_proxy("user", "skills")
     tasks: Mapped[List[Task]] = relationship(
         "Task", secondary="intern_task", back_populates="interns"
     )
@@ -182,6 +184,7 @@ class Supervisor(Base):
     projects: Mapped[List[Project]] = relationship(
         "Project", back_populates="supervisor"
     )
+    skills: Mapped[List[Skill]] = association_proxy("user", "skills")
     tasks: Mapped[List[Task]] = relationship("Task", back_populates="supervisor")
 
 
@@ -215,6 +218,11 @@ class Department(Base):
 
 
 class Skill(Base):
+    __repr_attrs__ = (
+        "id",
+        "name"
+    )
+
     __tablename__ = "skill"
 
     id: Mapped[UUID] = mapped_column(

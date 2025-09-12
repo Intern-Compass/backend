@@ -13,7 +13,7 @@ class SupervisorOutModel(UserOutModel):
     position: str | None
 
     @classmethod
-    def from_supervisor(cls, user: User) -> "UserOutModel":
+    def from_supervisor(cls, user: User) -> "SupervisorOutModel":
         return SupervisorOutModel(
             user_id=str(user.id),
             firstname=user.firstname,

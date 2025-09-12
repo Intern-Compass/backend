@@ -24,7 +24,7 @@ from src.utils import (
     password_is_correct,
     hash_password,
     generate_random_code,
-    normalize_email,
+    normalize_string,
 )
 from ..infra.email.contexts import (
     VerifyEmailContext,
@@ -33,6 +33,7 @@ from ..infra.email.contexts import (
 )
 from ..infra.email import send_email
 from ..logger import logger
+from ..repositories import SkillRepository
 from ..repositories.supervisor_repo import SupervisorRepository
 from ..schemas.intern_schemas import InternOutModel
 from ..schemas.supervisor_schemas import SupervisorInModel, SupervisorOutModel
@@ -46,6 +47,7 @@ class AuthService:
         intern_repo: Annotated[InternRepository, Depends()],
         supervisor_repo: Annotated[SupervisorRepository, Depends()],
         code_repo: Annotated[VerificationCodeRepository, Depends()],
+        skill_repo: Annotated[SkillRepository, Depends()],
         background_task: BackgroundTasks,
     ):
         self.session = session
@@ -53,6 +55,7 @@ class AuthService:
         self.intern_repo = intern_repo
         self.supervisor_repo = supervisor_repo
         self.code_repo = code_repo
+        self.skill_repo = skill_repo
         self.background_task = background_task
 
     # TODO: Rate limit
@@ -70,33 +73,32 @@ class AuthService:
                 if existing_user.verified:
                     raise HTTPException(
                         status_code=HTTP_409_CONFLICT,
-                        detail="User already exists. Please log in",
+                        detail="User already exists with specified email or phone number. Please log in",
                     )
 
+                # The user exists but isn't verified yet
                 code: str = generate_random_code()
                 await self.code_repo.upsert_code_with_user_id(
                     conn=self.session, user_id=existing_user.id, value=code
                 )
                 send_code = code
-                user_email = normalize_email(existing_user.email)
+                user_email = normalize_string(existing_user.email)
 
             else:
-                # TODO: refactor and simplify different user creation. To use Polymophic/Joined table inheritance
-
                 # Hash password  when creating a new user
                 new_user.password = hash_password(password=new_user.password)
 
+                unverified_user: User = await self.user_repo.create_new_user(
+                    conn=self.session, new_user=new_user, skill_repo=self.skill_repo
+                )
+
                 if isinstance(new_user, InternInModel):
                     unverified_user: User = await self.intern_repo.create_new_intern(
-                        conn=self.session, new_intern=new_user
+                        conn=self.session, new_intern=new_user, user=unverified_user
                     )
                 elif isinstance(new_user, SupervisorInModel):
-                    unverified_user: User = await self.supervisor_repo.create_new_supervisor(  # if type: any other type
-                        conn=self.session, new_supervisor=new_user
-                    )
-                else:
-                    unverified_user: User = await self.user_repo.create_new_user(
-                        conn=self.session, new_user=new_user
+                    unverified_user: User = await self.supervisor_repo.create_new_supervisor(
+                        conn=self.session, new_supervisor=new_user, user=unverified_user
                     )
 
                 code = generate_random_code()
@@ -104,10 +106,7 @@ class AuthService:
                     conn=self.session, user_id=unverified_user.id, code=code
                 )
                 send_code = code
-                user_email = normalize_email(unverified_user.email)
-
-        # At this point, transaction has committed successfully
-        print(f"Code for {user_email}: {send_code}")
+                user_email = normalize_string(unverified_user.email)
 
         # Send verification code to email
         self.background_task.add_task(
@@ -143,21 +142,28 @@ class AuthService:
 
             if verified_user.type == UserType.SUPERVISOR:
                 user_to_login = SupervisorOutModel.from_supervisor(verified_user)
+                logger.info(f"Supervisor user {verified_user.email} has been verified")
             elif verified_user.type == UserType.INTERN:
                 user_to_login = InternOutModel.from_intern(verified_user)
+                logger.info(f"Intern user {verified_user.email} has been verified")
+            else:
+                user_to_login = UserOutModel.from_user(verified_user)
 
             access_token: str = generate_access_token(
                 user_to_login=user_to_login,
             )
 
         # Send confirmation mail once user has been created.
-        user_normalized_email: str = normalize_email(verified_user.email)
+        user_normalized_email: str = normalize_string(verified_user.email)
         self.background_task.add_task(
             send_email,
             user_normalized_email,
             context=EmailVerifiedContext(),
         )
-        return {"access_token": access_token, "token_type": "Bearer"}
+        return {
+            "access_token": access_token,
+            "token_type": "Bearer"
+        }
 
     async def login(self, username: str, password: str):
         existing_user: User = await self.user_repo.get_user_by_email_or_phone(
@@ -264,7 +270,6 @@ class AuthService:
                 }
 
         if user_email:
-            # TODO: Change to ResetPasswordEmailContext
             self.background_task.add_task(
                 send_email,
                 user_email,

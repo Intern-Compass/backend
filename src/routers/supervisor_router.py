@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastapi.params import Depends
 
+from src.services.matching_service import MatchingService
 from src.services.supervisor_service import SupervisorService
 from src.utils import get_supervisor_user
 
@@ -21,12 +22,10 @@ async def get_interns(
     )
 
 
-@router.get("/assign-intern")
-async def assign_intern(
-    intern_id: str,
-    supervisor_service: Annotated[SupervisorService, Depends()],
-    supervisor: Annotated[dict, Depends(get_supervisor_user)],
+@router.post("/perform-matching")
+async def perform_matches(
+    matching_service: Annotated[MatchingService, Depends()],
+    _: Annotated[dict, Depends(get_supervisor_user)],
 ):
-    return await supervisor_service.assign_intern_to_supervisor(
-        supervisor_id=supervisor.get("supervisor_id"), intern_id=intern_id
-    )
+    # Will refactor this to its own dedicated router.
+    return await matching_service.perform_bulk_matching()
