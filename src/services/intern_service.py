@@ -10,6 +10,8 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.params import Depends
+from fastapi import HTTPException
+
 from src.models.app_models import Project
 from src.repositories.intern_repository import InternRepository
 from src.repositories.project_repo import ProjectRepository
@@ -35,14 +37,23 @@ class InternService:
         self.supervisor_repo = supervisor
         self.project_repo = project
 
-    async def get_supervisor(self, intern_id: uuid.UUID) -> ISupervisor:
+    async def get_supervisor(self, user_id: uuid.UUID) -> ISupervisor:
         async with self.session.begin():
-            return await self.supervisor_repo.get_supervisor_by_intern_id(self.session, intern_id)
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.supervisor_repo.get_supervisor_by_intern_id(self.session, intern.id)
 
-    async def get_tasks(self, intern_id: uuid.UUID) -> list[TaskOutModel]:
+    async def get_tasks(self, user_id: uuid.UUID) -> list[TaskOutModel]:
         async with self.session.begin():
-            return await self.task_repo.get_all_tasks_by_intern_id(self.session, intern_id)
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.task_repo.get_all_tasks_by_intern_id(self.session, intern.id)
 
-    async def get_projects(self, intern_id: uuid.UUID) -> list[Project]:
+    async def get_projects(self, user_id: uuid.UUID) -> list[Project]:
         async with self.session.begin():
-            return await self.project_repo.get_all_projects_by_intern_id(intern_id)
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.project_repo.get_all_projects_by_intern_id(self.session, intern.id)

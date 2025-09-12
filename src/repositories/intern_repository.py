@@ -1,6 +1,8 @@
 from typing import Annotated
 from uuid import UUID, uuid4
 
+from sqlalchemy import select
+
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,3 +61,12 @@ class InternRepository:
         await conn.flush()
 
         return user
+
+    async def get_intern_by_user_id(self, conn: AsyncSession, user_id: UUID):
+        stmt = (
+            select(self.table)
+            .join(User, User.id == self.table.user_id)
+            .where(User.id == user_id)
+        )
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()

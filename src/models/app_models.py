@@ -5,7 +5,7 @@ from typing import Optional, List
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import String, Text, Date, DateTime, ForeignKey, Index, Enum
+from sqlalchemy import Boolean, String, Text, Date, DateTime, ForeignKey, Index, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column, DeclarativeBase
 
@@ -140,6 +140,7 @@ class Intern(Base):
         "Task", secondary="intern_task", back_populates="interns"
     )
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
+    todos: Mapped[List[Todo]] = relationship("Todo", back_populates="intern")
 
 
 class InternTask(Base):
@@ -401,3 +402,31 @@ class VerificationCode(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="verification_code")
+
+
+class Todo(Base):
+    __tablename__ = "todo"
+
+    id: Mapped[UUID] = mapped_column(
+            UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    intern_id: Mapped[UUID] = mapped_column(
+            UUID(as_uuid=True),
+            ForeignKey("intern.id", onupdate="CASCADE", ondelete="CASCADE"),
+            nullable=False
+    )
+    title: Mapped[str] = mapped_column(String)
+    details: Mapped[str] = mapped_column(String)
+    done: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(),
+        onupdate=lambda: datetime.now(),
+    )
+
+    intern: Mapped[Intern] = relationship("Intern", back_populates="todos")
