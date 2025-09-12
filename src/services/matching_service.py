@@ -30,10 +30,10 @@ class MatchingService:
 
             matches: dict = await matcher(supervisors, unmatched_interns)
 
-        for department, match in matches.items():
+        for department, department_match in matches.items():
             logger.info(f"Matching for department: {department}")
 
-            for supervisor, intern_list in match.items():
+            for supervisor, intern_list in department_match.items():
                 for intern in intern_list:
                     try:
                         await self.intern_repo.assign_supervisor_to_intern(
