@@ -37,6 +37,19 @@ def generate_access_token(user_to_login: UserOutModel) -> str:
     return access_token
 
 
+def generate_password_reset_token(user_email: str) -> str:
+    payload: dict = {
+        "sub": user_email,
+        "type": TokenType.PASSWORD_RESET,
+        "exp": (datetime.now() + timedelta(hours=2)),
+    }
+
+    token: str = jose_jwt.encode(
+        claims=payload, key=settings.SECRET_KEY, algorithm=settings.ALGO
+    )
+    return token
+
+
 def password_is_correct(user_password: str, supplied_password: str) -> bool:
     try:
         if ph.verify(user_password, supplied_password):
