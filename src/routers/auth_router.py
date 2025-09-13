@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi.params import Depends
@@ -10,6 +11,8 @@ from src.schemas.intern_schemas import InternInModel
 from src.schemas.supervisor_schemas import SupervisorInModel
 from src.schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
 from src.services import AuthService
+
+from ..infra.token import PasswordResetToken
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
 """Router concerns everything that has to do with authentication."""
@@ -61,8 +64,9 @@ async def request_request_password(
 @router.post("/reset-password")
 async def reset_password(
     details: ResetPasswordRequest,
+    user_id: Annotated[UUID, Depends(PasswordResetToken.dependency)],
     auth_service: Annotated[AuthService, Depends()],
 ):
-    return await auth_service.verify_code_and_reset_password(
-        code=details.code, new_password=details.password
+    return await auth_service.reset_password(
+        user_id=user_id, new_password=details.password
     )

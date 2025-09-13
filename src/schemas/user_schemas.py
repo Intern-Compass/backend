@@ -50,7 +50,6 @@ class UserOutModel(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    code: str
     password: str
 
 
