@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, BackgroundTasks
@@ -15,6 +16,7 @@ from starlette.status import (
 from jwt.exceptions import ExpiredSignatureError, DecodeError
 
 from src.repositories.general_user_repo import UserRepository
+from ..infra.token import PasswordResetToken
 from src.models.app_models import User, VerificationCode
 from src.db import get_db_session
 from src.repositories.intern_repo import InternRepository
@@ -25,9 +27,7 @@ from src.utils import (
     generate_access_token,
     password_is_correct,
     hash_password,
-    generate_random_code,
     normalize_string,
-    generate_password_reset_token,
     decode_token,
     TokenType,
 )
@@ -245,7 +245,7 @@ class AuthService:
             logger.info(f"No user with email {email} exists to send verification code.")
 
         if user:
-            token = generate_password_reset_token(user.id)
+            token = PasswordResetToken.new(user_id=user.id)
             user_email = user.email
             self.background_task.add_task(
                 send_email,
