@@ -5,29 +5,58 @@ This module will handle:
     - Viewing tasks assigned by the supervisor
     Anything else the intern_auth router might need
 """
-
+import uuid
 from typing import Annotated
 
-from fastapi.params import Depends
+from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_db_session
-from ..models.app_models import Intern, Supervisor
+from ..models.app_models import Intern, Project, Supervisor
 from ..repositories.intern_repo import InternRepository
+from ..repositories.project_repo import ProjectRepository
 from ..repositories.supervisor_repo import SupervisorRepository
+from ..repositories.task_repo import TaskRepository
+from ..schemas.intern_schemas import ISupervisor
 from ..schemas.supervisor_schemas import SupervisorOutModel
+from ..schemas.task_schemas import TaskOutModel
 
 
 class InternService:
     def __init__(
         self,
         session: Annotated[AsyncSession, Depends(get_db_session)],
-        intern_repo: Annotated[InternRepository, Depends()],
-        supervisor_repo: Annotated[SupervisorRepository, Depends()],
-    ):
+        task: Annotated[TaskRepository, Depends()],
+        intern: Annotated[InternRepository, Depends()],
+        project: Annotated[ProjectRepository, Depends()],
+        supervisor: Annotated[SupervisorRepository, Depends()]
+    ) -> None:
         self.session = session
-        self.intern_repo = intern_repo
-        self.supervisor_repo = supervisor_repo
+        self.task_repo = task
+        self.intern_repo = intern
+        self.supervisor_repo = supervisor
+        self.project_repo = project
+
+    async def get_supervisor_by_intern_user_id(self, user_id: uuid.UUID) -> ISupervisor:
+        async with self.session.begin():
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.supervisor_repo.get_supervisor_by_intern_id(self.session, intern.id)
+
+    async def get_tasks(self, user_id: uuid.UUID) -> list[TaskOutModel]:
+        async with self.session.begin():
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.task_repo.get_all_tasks_by_intern_id(self.session, intern.id)
+
+    async def get_projects(self, user_id: uuid.UUID) -> list[Project]:
+        async with self.session.begin():
+            intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
+            if not intern:
+                raise HTTPException(status_code=404, detail="Intern not found")
+            return await self.project_repo.get_all_projects_by_intern_id(self.session, intern.id)
 
     async def get_intern(self, intern_id: str):
         async with self.session.begin():
