@@ -1,8 +1,10 @@
 from abc import ABC
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+from typing import Annotated
 from uuid import UUID, uuid4
 
+from fastapi import Body, HTTPException, status
 from jwt import PyJWTError, decode, encode
 
 from ..schemas import UserOutModel
@@ -28,7 +30,7 @@ TOKEN_LIFETIMES: dict[TokenType, timedelta] = {
 }
 
 
-class TokenBase(ABC):
+class TokenBase[DecodedType](ABC):
     token_type: TokenType
 
     @classmethod
@@ -49,7 +51,7 @@ class TokenBase(ABC):
         )
 
     @staticmethod
-    def decode(token: str) -> dict:
+    def decode(token: str) -> DecodedType:
         try:
             claims: dict = decode(
                 token, key=settings.SECRET_KEY, algorithms=[settings.ALGO]
@@ -62,8 +64,14 @@ class TokenBase(ABC):
             pass
         return claims
 
+    def dependency(self, token: Annotated[str, Body()] = None) -> DecodedType:
+        try:
+            return self.decode(token)
+        except InvalidTokenError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-class AccessToken(TokenBase):
+
+class AccessToken(TokenBase[UserOutModel]):
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
