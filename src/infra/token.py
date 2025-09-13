@@ -31,17 +31,18 @@ TOKEN_LIFETIMES: dict[TokenType, timedelta] = {
 class TokenBase(ABC):
     token_type: TokenType
 
-    def new(self, sub: str | UUID, data: dict | None = None) -> str:
+    @classmethod
+    def new(cls, sub: str | UUID, data: dict | None = None) -> str:
         if isinstance(sub, UUID):
             sub = str(sub)
         return encode(
             payload={
                 "data": data,
-                "exp": self.token_type.lifetime.total_seconds(),
+                "exp": cls.token_type.lifetime.total_seconds(),
                 "iat": datetime.now(UTC),
                 "jti": uuid4(),
                 "sub": sub,
-                "type": self.token_type,
+                "type": cls.token_type,
             },
             key=settings.SECRET_KEY,
             algorithm=settings.ALGO,
@@ -66,7 +67,8 @@ class AccessToken(TokenBase):
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
-    def new(self, user: UserOutModel) -> str:
+    @classmethod
+    def new(cls, user: UserOutModel = None) -> str:
         user_id = user.user_id
         return super().new(sub=user_id, data=user.model_dump())
 
@@ -81,7 +83,8 @@ class PasswordResetToken(TokenBase):
     token_type = TokenType.PASSWORD_RESET
 
     # noinspection PyMethodOverriding
-    def new(self, user_id: UUID):
+    @classmethod
+    def new(cls, user_id: UUID = None) -> str:
         return super().new(sub=user_id)
 
     @staticmethod
