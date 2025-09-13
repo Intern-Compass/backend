@@ -12,21 +12,28 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
+from jwt.exceptions import ExpiredSignatureError, DecodeError
+
 from src.repositories.general_user_repo import UserRepository
 from src.models.app_models import User, VerificationCode
 from src.db import get_db_session
 from src.repositories.intern_repo import InternRepository
 from src.repositories.verification_code_repo import VerificationCodeRepository
 from src.schemas import UserInModel, InternInModel
-from src.schemas.user_schemas import UserOutModel, UserType
+from src.schemas.user_schemas import UserOutModel
 from src.utils import (
     generate_access_token,
     password_is_correct,
     hash_password,
     generate_random_code,
     normalize_string,
+    generate_password_reset_token,
+    decode_token,
+    TokenType,
 )
+from src.settings import settings
 from ..infra.email.contexts import (
+    ForgotPasswordContext,
     VerifyEmailContext,
     EmailVerifiedContext,
     UpdatedUserContext,
@@ -234,68 +241,46 @@ class AuthService:
             user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session, email=email
             )
-            if not user:
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-                logger.info(
-                    f"No user with email {email} exists to send verification code."
-                )
+        if not user:
+            logger.info(f"No user with email {email} exists to send verification code.")
 
-            user_email: str | None = None
-            send_code: str | None = None
-
-            if user and not user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.create_code(
-                    conn=self.session, user_id=user.id, code=code
-                )
-                send_code = code
-                user_email = user.email
-
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
-            elif user and user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.upsert_code_with_user_id(
-                    conn=self.session, user_id=user.id, value=code
-                )
-
-                send_code = code
-                user_email = user.email
-
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
-        if user_email:
+        if user:
+            token = generate_password_reset_token(user.id)
+            user_email = user.email
             self.background_task.add_task(
                 send_email,
                 user_email,
-                context=VerifyEmailContext(send_code=send_code),
+                context=ForgotPasswordContext(
+                    reset_link=f"https://{settings.FRONTEND_URL}/reset_link?token={token}"
+                ),
             )
+        response = {
+            "detail": "If this email exists, a password reset email will be sent."
+        }
         return response
 
-    async def verify_code_and_reset_password(self, code: str, new_password: str):
-        async with self.session.begin():
-            verified_code: bool | VerificationCode = await self._verify_code(
-                code=code, conn=self.session
-            )
+    async def verify_token_and_reset_password(self, token: str, new_password: str):
+        e = HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
+        )
+        try:
+            payload = decode_token(token)
+        except (ExpiredSignatureError, DecodeError):
+            raise e
+        else:
+            if any(
+                [(not payload["sub"]), (payload["type"] != TokenType.PASSWORD_RESET)]
+            ):
+                raise e
+            user_id = payload["sub"]
 
-            if not verified_code:
-                raise HTTPException(
-                    status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
-                )
-
-            new_password: str = hash_password(new_password)
-            values_to_update: dict = {"password": new_password}
-            updated_user: User = await self.user_repo.update(
-                conn=self.session,
-                user_id=verified_code.user_id,
-                values=values_to_update,
-            )
+        new_password: str = hash_password(new_password)
+        values_to_update: dict = {"password": new_password}
+        updated_user: User = await self.user_repo.update(
+            conn=self.session,
+            user_id=user_id,
+            values=values_to_update,
+        )
 
         self.background_task.add_task(
             send_email,

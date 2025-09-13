@@ -1,5 +1,6 @@
 import random
 from datetime import datetime, timedelta
+from enum import StrEnum
 from typing import Annotated
 
 import argon2
@@ -19,6 +20,11 @@ from src.settings import settings
 ph: PasswordHasher = PasswordHasher()
 
 
+class TokenType(StrEnum):
+    ACCESS = "access"
+    PASSWORD_RESET = "password_reset"
+
+
 def generate_access_token(user_to_login: UserOutModel) -> str:
     payload: dict = {
         "sub": user_to_login.user_id,
@@ -30,6 +36,19 @@ def generate_access_token(user_to_login: UserOutModel) -> str:
         claims=payload, key=settings.SECRET_KEY, algorithm=settings.ALGO
     )
     return access_token
+
+
+def generate_password_reset_token(user_id) -> str:
+    payload: dict = {
+        "sub": user_id,
+        "type": TokenType.PASSWORD_RESET,
+        "exp": (datetime.now() + timedelta(hours=2)),
+    }
+
+    token: str = jose_jwt.encode(
+        claims=payload, key=settings.SECRET_KEY, algorithm=settings.ALGO
+    )
+    return token
 
 
 def password_is_correct(user_password: str, supplied_password: str) -> bool:
