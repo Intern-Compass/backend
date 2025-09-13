@@ -65,10 +65,16 @@ class TokenBase[DecodedType](ABC):
         return claims
 
     def dependency(self, token: Annotated[str, Body()] = None) -> DecodedType:
+        """Gets the token from the request body, and runs it through this class' decode method"""
+        e = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+        if token is None:
+            raise e
         try:
             return self.decode(token)
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise e
 
 
 class AccessToken(TokenBase[UserOutModel]):
