@@ -82,7 +82,7 @@ class AccessToken(TokenBase[UserOutModel]):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def new(cls, user: UserOutModel = None) -> str:
+    def new(cls, user: UserOutModel) -> str:
         user_id = user.user_id
         return super().new(sub=user_id, data=user.model_dump())
 
@@ -98,7 +98,7 @@ class PasswordResetToken(TokenBase):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def new(cls, user_id: UUID = None) -> str:
+    def new(cls, user_id: UUID) -> str:
         return super().new(sub=user_id)
 
     @staticmethod
