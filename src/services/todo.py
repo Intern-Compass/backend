@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from src.db import get_db_session
 from src.models.app_models import Todo
-from src.repositories.intern_repository import InternRepository
+from src.repositories.intern_repo import InternRepository
 from src.repositories.todo import TodoRepository
 from src.schemas.todo import TodoInModel, TodoUpdateModel
 

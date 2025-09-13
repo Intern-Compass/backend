@@ -2,7 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 
-from src.schemas import UserInModel
+from ..common import DepartmentEnum
+from ..models import User
+from ..schemas import UserInModel, UserOutModel
 
 
 class InternInModel(UserInModel):
@@ -15,3 +17,29 @@ class ISupervisor(BaseModel):
     name: str
     email: EmailStr
     phone_number: str
+
+class InternOutModel(UserOutModel):
+    intern_id: str
+    bio: str | None = None
+    school: str | None = None
+    internship_start_date: str
+    internship_end_date: str
+
+    @classmethod
+    def from_intern(cls, user: User) -> "InternOutModel":
+        return InternOutModel(
+            user_id=str(user.id),
+            firstname=user.firstname,
+            lastname=user.lastname,
+            phone_number=user.phone_number,
+            email=user.email,
+            type=user.type,
+            department=DepartmentEnum(user.department_id),
+            date_of_birth=user.date_of_birth.isoformat(),
+            work_location=user.work_location,
+            intern_id=str(user.intern.id),
+            bio=user.intern.bio,
+            school=user.intern.school,
+            internship_start_date=user.intern.start_date.isoformat(),
+            internship_end_date=user.intern.end_date.isoformat(),
+        )

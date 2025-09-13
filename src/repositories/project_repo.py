@@ -1,10 +1,10 @@
 import uuid
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import UUID, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Project, InternTask, Task
-from src.schemas.project_schemas import ProjectInModel
+from ..models.app_models import Project, InternTask, Task
+from ..schemas.project_schemas import ProjectInModel
 
 
 class ProjectRepository:
@@ -12,13 +12,15 @@ class ProjectRepository:
         self.table = Project
 
     async def create_new_project(self, new_project: ProjectInModel, conn: AsyncSession):
-        project: Project = Project(
+        project: Project = self.table(
             title=new_project.title,
             description=new_project.description,
             supervisor_id=uuid.UUID(new_project.supervisor_id),
             division_id=uuid.UUID(new_project.division_id),
         )
         conn.add(project)
+        await conn.flush()
+        await conn.refresh(project)
         return project
 
     async def get_project_by_id(self, conn: AsyncSession, id_value: str):
@@ -31,12 +33,12 @@ class ProjectRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: str):
+    async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: uuid.UUID):
         stmt = (
             select(self.table)
             .join(Task, self.table.id == Task.project_id)
             .join(InternTask, Task.id == InternTask.task_id)
-            .where(InternTask.intern_id == uuid.UUID(intern_id))
+            .where(InternTask.intern_id == intern_id)
             .distinct()
         )
         result = await conn.execute(stmt)

@@ -3,8 +3,8 @@ import uuid
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.app_models import Task, InternTask
-from src.schemas.task_schemas import TaskInModel
+from ..models.app_models import Task, InternTask
+from ..schemas.task_schemas import TaskInModel
 
 
 class TaskRepository:
@@ -31,11 +31,11 @@ class TaskRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_tasks_by_intern_id(self, conn: AsyncSession, intern_id: str):
+    async def get_all_tasks_by_intern_id(self, conn: AsyncSession, intern_id: uuid.UUID):
         stmt = (
             select(self.table)
             .join(InternTask, self.table.id == InternTask.task_id)
-            .where(InternTask.intern_id == uuid.UUID(intern_id))
+            .where(InternTask.intern_id == intern_id)
         )
         result = await conn.execute(stmt)
         return result.scalars().all()
