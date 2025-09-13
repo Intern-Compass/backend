@@ -1,8 +1,10 @@
-from datetime import datetime, date
+from datetime import datetime
 
-from src.common import DepartmentEnum
-from src.models import User
-from src.schemas import UserInModel, UserOutModel
+from pydantic import BaseModel, EmailStr
+
+from ..common import DepartmentEnum
+from ..models import User
+from ..schemas import UserInModel, UserOutModel
 
 
 class InternInModel(UserInModel):
@@ -11,6 +13,10 @@ class InternInModel(UserInModel):
     internship_start_date: datetime
     internship_end_date: datetime
 
+class ISupervisor(BaseModel):
+    name: str
+    email: EmailStr
+    phone_number: str
 
 class InternOutModel(UserOutModel):
     intern_id: str

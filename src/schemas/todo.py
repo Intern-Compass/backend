@@ -1,0 +1,25 @@
+from datetime import datetime, date
+
+from pydantic import UUID4, BaseModel
+
+from src.models.app_models import Task, Todo
+
+
+class TodoInModel(BaseModel):
+    title: str
+    details: str
+
+
+class TodoUpdateModel(BaseModel):
+    # title: str | None
+    # details: str | None
+    done: bool | None
+
+
+class TodoOutModel(BaseModel):
+    id: UUID4
+    title: str
+    details: str
+    done: bool
+    created_at: datetime
+    updated_at: datetime

@@ -72,3 +72,21 @@ class SupervisorRepository:
 
         result: Result = await conn.execute(stmt)
         return result.scalars().all()
+
+    async def get_supervisor_by_intern_user_id(self, conn: AsyncSession, intern_user_id: UUID) -> Supervisor | None:
+        stmt = (
+            select(self.table)
+            .join(Intern, Intern.supervisor_id == self.table.id)
+            .where(Intern.user_id == intern_user_id)
+        )
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_supervisor_by_intern_id(self, conn: AsyncSession, intern_id: UUID) -> Supervisor | None:
+        stmt = (
+            select(self.table)
+            .join(Intern, Intern.supervisor_id == self.table.id)
+            .where(Intern.id == intern_id)
+        )
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()

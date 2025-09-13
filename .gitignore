@@ -13,3 +13,5 @@ htmlcov/
 .pytest_cache/
 docker-compose.override.yml
 _scripts/
+_scripts
+_TODO

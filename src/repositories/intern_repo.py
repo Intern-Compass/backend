@@ -50,6 +50,15 @@ class InternRepository:
         result: Result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_intern_by_user_id(self, conn: AsyncSession, user_id: uuid.UUID):
+        stmt = (
+            select(self.table)
+            .join(User, User.id == self.table.user_id)
+            .where(User.id == user_id)
+        )
+        result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_interns(self, conn):
         stmt: Select = select(self.table).options(
             selectinload(Intern.user),
