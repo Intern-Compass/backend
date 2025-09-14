@@ -73,6 +73,7 @@ class User(Base):
         onupdate=lambda: datetime.now(),
     )
 
+    # relationships
     intern: Mapped[Intern] = relationship(
         "Intern", back_populates="user", uselist=False
     )
@@ -141,6 +142,7 @@ class Intern(Base):
     tasks: Mapped[List[Task]] = relationship(
         "Task", secondary="intern_task", back_populates="interns"
     )
+    projects: Mapped[List[Project]] = relationship("Project", secondary="project_intern", back_populates="interns")
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
     todos: Mapped[List[Todo]] = relationship("Todo", back_populates="intern")
 
@@ -263,6 +265,7 @@ class Project(Base):
     supervisor: Mapped[Optional[Supervisor]] = relationship(
         "Supervisor", back_populates="projects"
     )
+    interns: Mapped[List[Intern]] = relationship("Intern", secondary="project_intern", back_populates="projects")
     department: Mapped[Optional[Department]] = relationship(
         "Department", back_populates="projects"
     )
