@@ -48,14 +48,21 @@ class BaseToken[DecodedType](ABC):
             algorithm=settings.ALGO,
         )
 
-    @staticmethod
-    def decode(token: str) -> DecodedType:
+    @classmethod
+    def decode(cls, token: str) -> DecodedType:
+        # Actual decoding
         try:
             claims: dict = decode(
                 token, key=settings.SECRET_KEY, algorithms=[settings.ALGO]
             )
         except PyJWTError:
             raise InvalidTokenError
+
+        # Validating the token type
+        if claims.get("type") != cls.token_type.value:
+            raise InvalidTokenError
+
+        # Attempting to convert sub to UUID
         try:
             claims["sub"] = UUID(claims["sub"])
         except ValueError:
@@ -72,8 +79,8 @@ class AccessToken(BaseToken[UserOutModel]):
         user_id = user.user_id
         return super().new(sub=user_id, data=user.model_dump())
 
-    @staticmethod
-    def decode(token: str) -> UserOutModel:
+    @classmethod
+    def decode(cls, token: str) -> UserOutModel:
         claims = super().decode(token)
         data = claims["data"]
         return UserOutModel.model_validate(data)
@@ -87,8 +94,8 @@ class PasswordResetToken(BaseToken):
     def new(cls, user_id: UUID) -> str:
         return super().new(sub=user_id)
 
-    @staticmethod
-    def decode(token: str) -> UUID:
+    @classmethod
+    def decode(cls, token: str) -> UUID:
         claims = super().decode(token)
         user_id = claims["sub"]
         return user_id
