@@ -7,7 +7,7 @@ from src.schemas.user_schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
 from src.common import DepartmentEnum, UserType
 from src.schemas.skill_schemas import SkillCreate
-from src.utils import normalize_email
+from src.utils import normalize_string
 
 
 def create_mock_user(
@@ -21,7 +21,7 @@ def create_mock_user(
     mock_user.lastname = "User"
     mock_user.phone_number = "1234567890"
     mock_user.email = user_email
-    mock_user.normalized_email = normalize_email(user_email)
+    mock_user.normalized_email = normalize_string(user_email)
     mock_user.password = "hashed_password"
     mock_user.work_location = "Remote"
     mock_user.verified = verified
@@ -39,7 +39,6 @@ def create_mock_intern(mock_user: User) -> Intern:
     intern = Intern(
         id=uuid4(),
         user_id=mock_user.id,
-        division_name=DepartmentEnum.IT.value,
         bio="A test intern bio.",
         start_date=date(2025, 6, 1),
         end_date=date(2025, 9, 1),

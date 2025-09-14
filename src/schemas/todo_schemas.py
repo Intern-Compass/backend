@@ -11,8 +11,6 @@ class TodoInModel(BaseModel):
 
 
 class TodoUpdateModel(BaseModel):
-    # title: str | None
-    # details: str | None
     done: bool | None
 
 

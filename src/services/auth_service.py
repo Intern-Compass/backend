@@ -13,16 +13,17 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
+from ..common import UserType
 from ..infra.token import PasswordResetToken
-from src.db import get_db_session
-from src.models.app_models import User, VerificationCode
-from src.repositories.general_user_repo import UserRepository
-from src.repositories.intern_repo import InternRepository
-from src.repositories.verification_code_repo import VerificationCodeRepository
-from src.schemas import InternInModel, UserInModel
-from src.schemas.user_schemas import UserOutModel
-from src.settings import settings
-from src.utils import (
+from ..db import get_db_session
+from ..models.app_models import User, VerificationCode
+from ..repositories.general_user_repo import UserRepository
+from ..repositories.intern_repo import InternRepository
+from ..repositories.verification_code_repo import VerificationCodeRepository
+from ..schemas import InternInModel, UserInModel
+from ..schemas.user_schemas import UserOutModel
+from ..settings import settings
+from ..utils import (
     generate_access_token,
     generate_random_code,
     hash_password,
@@ -99,7 +100,9 @@ class AuthService:
 
                 if isinstance(new_user, InternInModel):
                     unverified_user: User = await self.intern_repo.create_new_intern(
-                        conn=self.session, new_intern=new_user, user=unverified_user
+                        conn=self.session,
+                        new_intern=new_user,
+                        user=unverified_user
                     )
                 elif isinstance(new_user, SupervisorInModel):
                     unverified_user: User = (

@@ -28,9 +28,16 @@ class SupervisorRepository:
 
         conn.add(user)
         await conn.flush()
-        await conn.refresh(supervisor)
+        await conn.refresh(user)
 
         return user
+
+    async def get_supervisors_by_ids(self, conn, ids: list[str]) -> list[Supervisor]:
+        stmt = select(self.table).where(Supervisor.id.in_(ids)).options(
+                selectinload(Supervisor.user).selectinload(User.skills)
+            )
+        result = await conn.execute(stmt)
+        return result.scalars().all()
 
     async def assign_interns_to_supervisor(
         self, supervisor_id: id, conn: AsyncSession, interns_to_assign: list[Intern]
@@ -47,10 +54,10 @@ class SupervisorRepository:
 
         return interns_to_assign
 
-    async def get_supervisor_details(self, conn: AsyncSession, supervisor_id: str):
+    async def get_supervisor_details(self, conn: AsyncSession, supervisor_id: UUID):
         stmt: Select = (
-            select(Supervisor)
-            .where(self.table.id == uuid.UUID(supervisor_id))
+            select(self.table)
+            .where(self.table.id == supervisor_id)
             .options(
                 selectinload(Supervisor.user),
                 selectinload(Supervisor.user).selectinload(User.skills),
@@ -85,8 +92,8 @@ class SupervisorRepository:
     async def get_supervisor_by_intern_id(self, conn: AsyncSession, intern_id: UUID) -> Supervisor | None:
         stmt = (
             select(self.table)
-            .join(Intern, Intern.supervisor_id == self.table.id)
             .where(Intern.id == intern_id)
+            .options(selectinload(Intern.supervisor).selectinload(Supervisor.user))
         )
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
