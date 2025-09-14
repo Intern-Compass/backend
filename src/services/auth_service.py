@@ -13,6 +13,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
+from ..common import UserType
 from ..infra.token import PasswordResetToken
 from src.db import get_db_session
 from src.models.app_models import User, VerificationCode
