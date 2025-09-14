@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import select, Select, Result
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -33,14 +34,12 @@ class SkillRepository:
     async def attach_skills_to_user(
         self, conn: AsyncSession, user_id: UUID, skills: list[SkillCreate]
     ):
-        skill_list = [
-            (
-                await self.create_or_get_skill(
-                    conn=conn, skill_name=normalize_string(skill.name)
-                )
+        skill_objs = []
+        for skill in skills:
+            skill_obj = await self.create_or_get_skill(
+                conn=conn, skill_name=normalize_string(skill.name)
             )
-            for skill in skills
-        ]
+            skill_objs.append(skill_obj)
 
         existing_user: User = (
             await conn.execute(
@@ -49,11 +48,15 @@ class SkillRepository:
                 .options(selectinload(User.skills))
             )
         ).scalar_one_or_none()
-        existing_user.skills.extend(skill_list)
+
+        existing_skill_ids = {s.id for s in existing_user.skills}
+
+        for skill in skill_objs:
+            if skill.id not in existing_skill_ids:
+                existing_user.skills.append(skill)
 
         conn.add(existing_user)
-        await conn.flush()
-
+        await conn.refresh(existing_user)
         return existing_user.skills
 
     async def add_new_skill(self, conn: AsyncSession, skill: SkillCreate):
