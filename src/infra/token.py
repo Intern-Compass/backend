@@ -83,6 +83,7 @@ class AccessToken(BaseToken[UserOutModel]):
     def decode(cls, token: str) -> UserOutModel:
         claims = super().decode(token)
         data = claims["data"]
+        data["user_id"] = claims["sub"]
         return UserOutModel.model_validate(data)
 
 
