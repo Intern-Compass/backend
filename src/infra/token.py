@@ -5,7 +5,10 @@ from uuid import UUID, uuid4
 
 from jwt import PyJWTError, decode, encode
 
+from ..common import UserType
 from ..schemas import UserOutModel
+from ..schemas.intern_schemas import InternOutModel
+from ..schemas.supervisor_schemas import SupervisorOutModel
 from ..settings import settings
 
 
@@ -84,7 +87,14 @@ class AccessToken(BaseToken[UserOutModel]):
         claims = super().decode(token)
         data = claims["data"]
         data["user_id"] = claims["sub"]
-        return UserOutModel.model_validate(data)
+        data["type"] = UserType(data["type"])
+        match data["type"]:
+            case UserType.SUPERVISOR:
+                return SupervisorOutModel.model_validate(data)
+            case UserType.INTERN:
+                return InternOutModel.model_validate(data)
+            case _:
+                return UserOutModel.model_validate(data)
 
 
 class PasswordResetToken(BaseToken):
