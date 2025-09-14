@@ -1,44 +1,42 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from fastapi import HTTPException, BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import (
-    HTTP_409_CONFLICT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_409_CONFLICT,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-from jwt.exceptions import ExpiredSignatureError, DecodeError
-
-from src.repositories.general_user_repo import UserRepository
-from src.models.app_models import User, VerificationCode
+from ..infra.token import PasswordResetToken
 from src.db import get_db_session
+from src.models.app_models import User, VerificationCode
+from src.repositories.general_user_repo import UserRepository
 from src.repositories.intern_repo import InternRepository
 from src.repositories.verification_code_repo import VerificationCodeRepository
-from src.schemas import UserInModel, InternInModel
+from src.schemas import InternInModel, UserInModel
 from src.schemas.user_schemas import UserOutModel
+from src.settings import settings
 from src.utils import (
     generate_access_token,
-    password_is_correct,
-    hash_password,
     generate_random_code,
+    hash_password,
     normalize_string,
-    generate_password_reset_token,
-    decode_token,
-    TokenType,
+    password_is_correct,
 )
-from src.settings import settings
-from ..infra.email.contexts import (
-    ForgotPasswordContext,
-    VerifyEmailContext,
-    EmailVerifiedContext,
-    UpdatedUserContext,
-)
+
 from ..infra.email import send_email
+from ..infra.email.contexts import (
+    EmailVerifiedContext,
+    ForgotPasswordContext,
+    UpdatedUserContext,
+    VerifyEmailContext,
+)
 from ..logger import logger
 from ..repositories import SkillRepository
 from ..repositories.supervisor_repo import SupervisorRepository
@@ -245,7 +243,7 @@ class AuthService:
             logger.info(f"No user with email {email} exists to send verification code.")
 
         if user:
-            token = generate_password_reset_token(user.id)
+            token = PasswordResetToken.new(user_id=user.id)
             user_email = user.email
             self.background_task.add_task(
                 send_email,
@@ -259,21 +257,7 @@ class AuthService:
         }
         return response
 
-    async def verify_token_and_reset_password(self, token: str, new_password: str):
-        e = HTTPException(
-            status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
-        )
-        try:
-            payload = decode_token(token)
-        except (ExpiredSignatureError, DecodeError):
-            raise e
-        else:
-            if any(
-                [(not payload["sub"]), (payload["type"] != TokenType.PASSWORD_RESET)]
-            ):
-                raise e
-            user_id = payload["sub"]
-
+    async def reset_password(self, user_id: UUID, new_password: str):
         new_password: str = hash_password(new_password)
         values_to_update: dict = {"password": new_password}
         updated_user: User = await self.user_repo.update(
