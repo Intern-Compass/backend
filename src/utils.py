@@ -61,7 +61,7 @@ def get_current_user(
     :return: UserOutModel
     """
     try:
-        payload: UserOutModel = AccessToken.decode(token)
+        payload: UserOutModel = AccessToken.decode(token=token)
         return payload
     except InvalidTokenError as e:
         logger.error(str(e))
