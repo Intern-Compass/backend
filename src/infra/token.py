@@ -28,7 +28,7 @@ TOKEN_LIFETIMES: dict[TokenType, timedelta] = {
 }
 
 
-class TokenBase[DecodedType](ABC):
+class BaseToken[DecodedType](ABC):
     token_type: TokenType
 
     @classmethod
@@ -63,7 +63,7 @@ class TokenBase[DecodedType](ABC):
         return claims
 
 
-class AccessToken(TokenBase[UserOutModel]):
+class AccessToken(BaseToken[UserOutModel]):
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
@@ -79,7 +79,7 @@ class AccessToken(TokenBase[UserOutModel]):
         return UserOutModel.model_validate(data)
 
 
-class PasswordResetToken(TokenBase):
+class PasswordResetToken(BaseToken):
     token_type = TokenType.PASSWORD_RESET
 
     # noinspection PyMethodOverriding
