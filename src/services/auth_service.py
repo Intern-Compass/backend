@@ -14,7 +14,7 @@ from starlette.status import (
 )
 
 from ..common import UserType
-from ..infra.token import PasswordResetToken
+from ..infra.token import PasswordResetToken, AccessToken
 from src.db import get_db_session
 from src.models.app_models import User, VerificationCode
 from src.repositories.general_user_repo import UserRepository
@@ -24,7 +24,6 @@ from src.schemas import InternInModel, UserInModel
 from src.schemas.user_schemas import UserOutModel
 from src.settings import settings
 from src.utils import (
-    generate_access_token,
     generate_random_code,
     hash_password,
     normalize_string,
@@ -159,9 +158,7 @@ class AuthService:
             else:
                 user_to_login = UserOutModel.from_user(verified_user)
 
-            access_token: str = generate_access_token(
-                user_to_login=user_to_login,
-            )
+            access_token: str = AccessToken.new(user=user_to_login)
 
         # Send confirmation mail once user has been created.
         user_normalized_email: str = normalize_string(verified_user.email)
@@ -200,7 +197,7 @@ class AuthService:
         else:
             user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
 
-        access_token: str = generate_access_token(user_to_login)
+        access_token: str = AccessToken.new(user=user_to_login)
 
         # new_refresh_token: str = await generate_refresh_token(
         #     existing_user.email, self.token_repo
