@@ -1,17 +1,18 @@
+import uuid
 from typing import Annotated
+from uuid import UUID
 
 from pydantic import UUID4
 
 from fastapi import APIRouter
 from fastapi.params import Depends
-from fastapi.responses import ORJSONResponse
 
-from ..schemas.intern_schemas import ISupervisor, InternOutModel
+from ..schemas.intern_schemas import ISupervisor, InternOutModel, BasicUserDetails
 from ..schemas.project_schemas import ProjectOutModel
 from ..schemas.task_schemas import TaskOutModel
-from ..schemas.todo import TodoInModel, TodoOutModel
+from ..schemas.todo_schemas import TodoInModel, TodoOutModel
 from ..services.intern_service import InternService
-from ..services.todo import TodoService
+from ..services.todo_service import TodoService
 from ..utils import get_intern_user
 
 
@@ -22,19 +23,19 @@ router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
 async def get_intern_supervisor(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
-) -> ISupervisor:
-    supervisor = await intern_service.get_supervisor_by_intern_user_id(user.user_id)
-    if supervisor:
-        return supervisor
-    return ORJSONResponse({"message": "Supervisor not found"}, status_code=404)
+) -> BasicUserDetails:
+    supervisor = await intern_service.get_supervisor_by_intern_id(
+        intern_id=uuid.UUID(user.intern_id)
+    )
+    return supervisor
 
 
-@router.get("/task", tags=["Tasks", "Dashboard"])
+@router.get("/tasks", tags=["Tasks", "Dashboard"])
 async def get_intern_tasks(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
 ) -> list[TaskOutModel]:
-    return await intern_service.get_tasks(user.user_id)
+    return await intern_service.get_tasks(user_id=uuid.UUID(user.user_id))
 
 
 @router.get("/projects", tags=["Projects", "Dashboard"])
@@ -42,18 +43,16 @@ async def get_projects(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
 ) -> list[ProjectOutModel]:
-    return await intern_service.get_projects(user.user_id)
+    return await intern_service.get_projects(intern_id=uuid.UUID(user.intern_id))
 
 
 @router.get("/todos", tags=["Todos", "Dashboard"])
 async def get_intern_todos(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     todo_service: Annotated[TodoService, Depends()],
-    limit: int | None = None,
-    offset: int | None = None,
-    done: bool | None = None,
+    is_done: bool | None = None,
 ) -> list[TodoOutModel]:
-    todos = await todo_service.get_todo(user.user_id, done, limit, offset)
+    todos = await todo_service.get_todos(user_id=UUID(user.user_id), is_done=is_done)
     return todos
 
 
@@ -63,17 +62,16 @@ async def create_intern_todo(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     todo_service: Annotated[TodoService, Depends()],
 ) -> TodoOutModel:
-    return await todo_service.create_todo(user_id=user.user_id, todo_data=todo_data)
+    return await todo_service.create_todo(
+        user_id=UUID(user.user_id), todo_data=todo_data
+    )
 
-
-@router.patch(
-    "/todos/{todo_id}/complete",
-    tags=["Todos", "Dashboard"],
-    dependencies=[Depends(get_intern_user)],
-)
+@router.patch("/todos/{todo_id}/complete", tags=["Todos", "Dashboard"])
 async def complete_intern_todo(
     todo_id: UUID4,
     todo_service: Annotated[TodoService, Depends()],
-) -> ORJSONResponse:
-    await todo_service.complete_todo(todo_id)
-    return ORJSONResponse({"message": "Todo marked as completed"}, status_code=200)
+    intern: Annotated[InternOutModel, Depends(get_intern_user)],
+):
+    return await todo_service.complete_todo(
+        todo_id=todo_id, intern_id=UUID(intern.intern_id)
+    )

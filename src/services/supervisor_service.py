@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException
 from fastapi.params import Depends
@@ -25,14 +26,14 @@ class SupervisorService:
         self.session = session
         self.intern_repo = intern_repo
 
-    async def get_interns(self, supervisor_id: str):
+    async def get_interns(self, supervisor_id: UUID):
         # TODO: IMPORTANT Fix the loading of relationships
         async with self.session.begin():
-            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
+            interns: list[Intern] = await self.intern_repo.get_interns_for_supervisor(
                 conn=self.session, supervisor_id=supervisor_id
             )
 
-        return [InternOutModel.from_user(intern.user) for intern in supervisor.interns]
+        return [InternOutModel.from_user(intern.user) for intern in interns]
 
     async def assign_intern_to_supervisor(self, supervisor_id: str, intern_id: str):
         async with self.session.begin():

@@ -33,7 +33,9 @@ class ProjectRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: uuid.UUID):
+    async def get_all_projects_by_intern_id(
+        self, conn: AsyncSession, intern_id: uuid.UUID
+    ):
         stmt = (
             select(self.table)
             .join(Task, self.table.id == Task.project_id)

@@ -73,6 +73,7 @@ class User(Base):
         onupdate=lambda: datetime.now(),
     )
 
+    # relationships
     intern: Mapped[Intern] = relationship(
         "Intern", back_populates="user", uselist=False
     )
@@ -140,6 +141,9 @@ class Intern(Base):
     skills: Mapped[List[Skill]] = association_proxy("user", "skills")
     tasks: Mapped[List[Task]] = relationship(
         "Task", secondary="intern_task", back_populates="interns"
+    )
+    projects: Mapped[List[Project]] = relationship(
+        "Project", secondary="project_intern", back_populates="interns"
     )
     notes: Mapped[List[Note]] = relationship("Note", back_populates="intern")
     todos: Mapped[List[Todo]] = relationship("Todo", back_populates="intern")
@@ -262,6 +266,9 @@ class Project(Base):
     )
     supervisor: Mapped[Optional[Supervisor]] = relationship(
         "Supervisor", back_populates="projects"
+    )
+    interns: Mapped[List[Intern]] = relationship(
+        "Intern", secondary="project_intern", back_populates="projects"
     )
     department: Mapped[Optional[Department]] = relationship(
         "Department", back_populates="projects"
@@ -412,12 +419,12 @@ class Todo(Base):
     __tablename__ = "todo"
 
     id: Mapped[UUID] = mapped_column(
-            UUID(as_uuid=True), primary_key=True, default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     intern_id: Mapped[UUID] = mapped_column(
-            UUID(as_uuid=True),
-            ForeignKey("intern.id", onupdate="CASCADE", ondelete="CASCADE"),
-            nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("intern.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
     )
     title: Mapped[str] = mapped_column(String)
     details: Mapped[str] = mapped_column(String)

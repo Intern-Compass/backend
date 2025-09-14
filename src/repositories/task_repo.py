@@ -31,7 +31,9 @@ class TaskRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_tasks_by_intern_id(self, conn: AsyncSession, intern_id: uuid.UUID):
+    async def get_all_tasks_by_intern_id(
+        self, conn: AsyncSession, intern_id: uuid.UUID
+    ):
         stmt = (
             select(self.table)
             .join(InternTask, self.table.id == InternTask.task_id)

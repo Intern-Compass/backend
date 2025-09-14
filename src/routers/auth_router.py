@@ -6,11 +6,10 @@ from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.responses import Response
 
-from src.schemas import UserInModel
-from src.schemas.intern_schemas import InternInModel
-from src.schemas.supervisor_schemas import SupervisorInModel
-from src.schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
-from src.services import AuthService
+from ..schemas.intern_schemas import InternInModel
+from ..schemas.supervisor_schemas import SupervisorInModel
+from ..schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
+from ..services import AuthService
 
 from ..infra.token import PasswordResetToken
 

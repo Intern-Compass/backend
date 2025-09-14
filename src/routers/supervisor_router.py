@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi.params import Depends
@@ -18,10 +19,19 @@ async def get_interns(
     supervisor_service: Annotated[SupervisorService, Depends()],
     supervisor: Annotated[SupervisorOutModel, Depends(get_supervisor_user)],
 ):
-    return await supervisor_service.get_interns(supervisor_id=supervisor.supervisor_id)
+    return await supervisor_service.get_interns(
+        supervisor_id=UUID(supervisor.supervisor_id)
+    )
 
 
-@router.post("/perform-matching", dependencies=[Depends(get_supervisor_user)])
+@router.get("/display-matches", tags=["Matching"])
+async def display_matches(
+    matching_service: Annotated[MatchingService, Depends()],
+):
+    return await matching_service.display_matches()
+
+
+@router.post("/perform-matching", tags=["Matching"])
 async def perform_matches(
     matching_service: Annotated[MatchingService, Depends()],
 ):

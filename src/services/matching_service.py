@@ -1,14 +1,17 @@
+from collections import defaultdict
 from typing import Annotated
+from uuid import UUID
 
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db import get_db_session
-from src.logger import logger
-from src.matching import matcher
-from src.models.app_models import Supervisor, Intern
-from src.repositories.intern_repo import InternRepository
-from src.repositories.supervisor_repo import SupervisorRepository
+from ..db import get_db_session
+from ..logger import logger
+from ..matching import matcher
+from ..models.app_models import Supervisor, Intern
+from ..repositories.intern_repo import InternRepository
+from ..repositories.supervisor_repo import SupervisorRepository
+from ..schemas.intern_schemas import BasicUserDetails
 
 
 class MatchingService:
@@ -22,6 +25,73 @@ class MatchingService:
         self.supervisor_repo = supervisor_repo
         self.session = session
 
+    async def display_matches(self):
+        async with self.session.begin():
+            supervisors_from_db: list[
+                Supervisor
+            ] = await self.supervisor_repo.get_supervisors_details(conn=self.session)
+            unmatched_interns_from_db: list[
+                Intern
+            ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
+
+            match_details: dict[
+                str, list[tuple[BasicUserDetails, list[BasicUserDetails]]]
+            ] = defaultdict(list)
+
+            matches: dict = matcher(supervisors_from_db, unmatched_interns_from_db)
+
+            supervisor_ids: set[str] = set()
+            intern_ids: set[str] = set()
+
+            for department, department_match in matches.items():
+                for supervisor_id, intern_id_list in department_match.items():
+                    supervisor_ids.add(supervisor_id)
+                    intern_ids.update(intern_id_list)
+
+            supervisors = await self.supervisor_repo.get_supervisors_by_ids(
+                conn=self.session, ids=list(supervisor_ids)
+            )
+            supervisor_map = {str(s.id): s for s in supervisors}
+
+            interns = await self.intern_repo.get_interns_by_ids(
+                conn=self.session, ids=list(intern_ids)
+            )
+            intern_map = {str(i.id): i for i in interns}
+
+            for department, department_match in matches.items():
+                for supervisor_id, intern_id_list in department_match.items():
+                    supervisor_details = supervisor_map[supervisor_id]
+
+                    formatted_supervisor: BasicUserDetails = BasicUserDetails(
+                        name=supervisor_details.user.firstname,
+                        email=supervisor_details.user.email,
+                        phone_number=supervisor_details.user.phone_number,
+                        skills=", ".join(
+                            [skill.name for skill in supervisor_details.user.skills]
+                        ),
+                    )
+
+                    formatted_intern_list: list[BasicUserDetails] = [
+                        BasicUserDetails(
+                            name=intern_map[intern_id].user.firstname,
+                            email=intern_map[intern_id].user.email,
+                            phone_number=intern_map[intern_id].user.phone_number,
+                            skills=", ".join(
+                                [
+                                    skill.name
+                                    for skill in intern_map[intern_id].user.skills
+                                ]
+                            ),
+                        )
+                        for intern_id in intern_id_list
+                    ]
+
+                    match_details[department].append(
+                        (formatted_supervisor, formatted_intern_list)
+                    )
+
+            return match_details
+
     async def perform_bulk_matching(self):
         async with self.session.begin():
             supervisors: list[
@@ -31,19 +101,21 @@ class MatchingService:
                 Intern
             ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
 
-            matches: dict = await matcher(supervisors, unmatched_interns)
+            matches: dict = matcher(supervisors, unmatched_interns)
 
-        for department, department_match in matches.items():
-            logger.info(f"Matching for department: {department}")
+            for department, department_match in matches.items():
+                logger.info(f"Matching for department: {department}")
 
-            for supervisor, intern_list in department_match.items():
-                for intern in intern_list:
-                    try:
-                        await self.intern_repo.assign_supervisor_to_intern(
-                            conn=self.session,
-                            supervisor_id=supervisor,
-                            intern_id=intern,
-                        )
-                    except ValueError:
-                        logger.info(f"Inern {intern} does not exist")
-                        continue
+                for supervisor_id, intern_list in department_match.items():
+                    for intern_id in intern_list:
+                        try:
+                            await self.intern_repo.assign_supervisor_to_intern(
+                                conn=self.session,
+                                supervisor_id=UUID(supervisor_id),
+                                intern_id=UUID(intern_id),
+                            )
+                        except ValueError:
+                            logger.info(f"Inern {intern_id} does not exist")
+                            continue
+
+        return {"detail": "Matching performed successfully"}
