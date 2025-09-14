@@ -3,9 +3,8 @@
 from collections import defaultdict
 
 from dotenv import load_dotenv
-from icecream import ic
 
-from src.models.app_models import Intern, Supervisor
+from .models.app_models import Intern, Supervisor
 
 load_dotenv()
 
@@ -56,7 +55,7 @@ def run_matching(all_supervisors, all_interns):
     return results
 
 
-async def matcher(supervisors: list[Supervisor], interns: list[Intern]):
+def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     # Expected data structure for matching
     supervisors_details: list[dict[str, int | str | list[str]]] = [
         {
@@ -77,5 +76,4 @@ async def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     ]
 
     matches = run_matching(supervisors_details, interns_details)
-    ic(matches)  # For debugging
     return matches
