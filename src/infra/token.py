@@ -1,13 +1,14 @@
 from abc import ABC
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import Body, HTTPException, status
 from jwt import PyJWTError, decode, encode
 
+from ..common import UserType
 from ..schemas import UserOutModel
+from ..schemas.intern_schemas import InternOutModel
+from ..schemas.supervisor_schemas import SupervisorOutModel
 from ..settings import settings
 
 
@@ -30,7 +31,7 @@ TOKEN_LIFETIMES: dict[TokenType, timedelta] = {
 }
 
 
-class TokenBase[DecodedType](ABC):
+class BaseToken[DecodedType](ABC):
     token_type: TokenType
 
     @classmethod
@@ -50,34 +51,29 @@ class TokenBase[DecodedType](ABC):
             algorithm=settings.ALGO,
         )
 
-    @staticmethod
-    def decode(token: str) -> DecodedType:
+    @classmethod
+    def decode(cls, token: str) -> DecodedType:
+        # Actual decoding
         try:
             claims: dict = decode(
                 token, key=settings.SECRET_KEY, algorithms=[settings.ALGO]
             )
         except PyJWTError:
             raise InvalidTokenError
+
+        # Validating the token type
+        if claims.get("type") != cls.token_type.value:
+            raise InvalidTokenError
+
+        # Attempting to convert sub to UUID
         try:
             claims["sub"] = UUID(claims["sub"])
         except ValueError:
             pass
         return claims
 
-    def dependency(self, token: Annotated[str, Body()] = None) -> DecodedType:
-        """Gets the token from the request body, and runs it through this class' decode method"""
-        e = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
-        if token is None:
-            raise e
-        try:
-            return self.decode(token)
-        except InvalidTokenError:
-            raise e
 
-
-class AccessToken(TokenBase[UserOutModel]):
+class AccessToken(BaseToken[UserOutModel]):
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
@@ -86,14 +82,22 @@ class AccessToken(TokenBase[UserOutModel]):
         user_id = user.user_id
         return super().new(sub=user_id, data=user.model_dump())
 
-    @staticmethod
-    def decode(token: str) -> UserOutModel:
+    @classmethod
+    def decode(cls, token: str) -> UserOutModel:
         claims = super().decode(token)
         data = claims["data"]
-        return UserOutModel.model_validate(data)
+        data["user_id"] = claims["sub"]
+        data["type"] = UserType(data["type"])
+        match data["type"]:
+            case UserType.SUPERVISOR:
+                return SupervisorOutModel.model_validate(data)
+            case UserType.INTERN:
+                return InternOutModel.model_validate(data)
+            case _:
+                return UserOutModel.model_validate(data)
 
 
-class PasswordResetToken(TokenBase):
+class PasswordResetToken(BaseToken):
     token_type = TokenType.PASSWORD_RESET
 
     # noinspection PyMethodOverriding
@@ -101,8 +105,8 @@ class PasswordResetToken(TokenBase):
     def new(cls, user_id: UUID) -> str:
         return super().new(sub=user_id)
 
-    @staticmethod
-    def decode(token: str) -> UUID:
+    @classmethod
+    def decode(cls, token: str) -> UUID:
         claims = super().decode(token)
         user_id = claims["sub"]
         return user_id
