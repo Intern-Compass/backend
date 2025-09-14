@@ -1,10 +1,8 @@
 from abc import ABC
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import Body, HTTPException, status
 from jwt import PyJWTError, decode, encode
 
 from ..schemas import UserOutModel
@@ -63,18 +61,6 @@ class TokenBase[DecodedType](ABC):
         except ValueError:
             pass
         return claims
-
-    def dependency(self, token: Annotated[str, Body()] = None) -> DecodedType:
-        """Gets the token from the request body, and runs it through this class' decode method"""
-        e = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
-        if token is None:
-            raise e
-        try:
-            return self.decode(token)
-        except InvalidTokenError:
-            raise e
 
 
 class AccessToken(TokenBase[UserOutModel]):
