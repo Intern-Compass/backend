@@ -10,12 +10,12 @@ from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from jose import jwt as jose_jwt
-from jwt.exceptions import ExpiredSignatureError, DecodeError
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 
 from src.logger import logger
 from src.schemas.user_schemas import UserOutModel, UserType
 from src.settings import settings
+from .infra.token import InvalidTokenError, AccessToken
 
 ph: PasswordHasher = PasswordHasher()
 
@@ -81,29 +81,25 @@ oauth_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def get_current_user(
     token: Annotated[str, Depends(oauth_scheme)],
-) -> dict:
+) -> UserOutModel:
     """
     Gets its token parameter from a FastAPI Dependency that checks the request for an "Authorization" header
-    :param token:
-    :return: user_data: str
+    with a Bearer token.
+    :param token: Bearer token
+    :return: UserOutModel
     """
     try:
-        payload: dict = decode_token(token)
+        payload: UserOutModel = AccessToken.decode(token)
         return payload
-    except ExpiredSignatureError as e:
+    except InvalidTokenError as e:
         logger.error(str(e))
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again"
         )
-    except DecodeError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again."
-        )
 
 
-def get_intern_user(payload: Annotated[dict, Depends(get_current_user)]):
-    if payload.get("type") == UserType.INTERN:
+def get_intern_user(payload: Annotated[UserOutModel, Depends(get_current_user)]):
+    if payload.type == UserType.INTERN:
         return payload
 
     raise HTTPException(
@@ -112,8 +108,8 @@ def get_intern_user(payload: Annotated[dict, Depends(get_current_user)]):
     )
 
 
-def get_supervisor_user(payload: Annotated[dict, Depends(get_current_user)]):
-    if payload.get("type") == UserType.SUPERVISOR:
+def get_supervisor_user(payload: Annotated[UserOutModel, Depends(get_current_user)]):
+    if payload.type == UserType.SUPERVISOR:
         return payload
     raise HTTPException(
         status_code=HTTP_403_FORBIDDEN,
