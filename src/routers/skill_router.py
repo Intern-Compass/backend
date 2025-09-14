@@ -29,12 +29,14 @@ async def add_skills_to_user(
     """
     Attach skills to a user.
     """
-    return await skill_service.add_skills_to_user(user_id=user.get("sub"), skills=skills)
+    return await skill_service.add_skills_to_user(
+        user_id=user.get("sub"), skills=skills
+    )
 
 
 @router.get("/get-user-skills", tags=["Profile", "Skills"])
 async def get_user_skills(
     user: Annotated[dict, Depends(get_current_user)],
-    skill_service: Annotated[SkillService, Depends()]
+    skill_service: Annotated[SkillService, Depends()],
 ) -> list[SkillRes]:
     return await skill_service.get_user_skills(user_id=uuid.UUID(user["sub"]))

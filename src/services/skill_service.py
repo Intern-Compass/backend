@@ -21,7 +21,7 @@ class SkillService:
         self,
         session: Annotated[AsyncSession, Depends(get_db_session)],
         repo: Annotated[SkillRepository, Depends()],
-        user_repo: Annotated[UserRepository, Depends()]
+        user_repo: Annotated[UserRepository, Depends()],
     ):
         self.session = session
         self.skill_repo = repo
@@ -55,6 +55,8 @@ class SkillService:
 
     async def get_user_skills(self, user_id: UUID) -> list[SkillRes]:
         async with self.session.begin():
-            user: User = await self.user_repo.get_by_id(conn=self.session, user_id=user_id)
+            user: User = await self.user_repo.get_by_id(
+                conn=self.session, user_id=user_id
+            )
 
         return [SkillRes(name=skill.name) for skill in user.skills]

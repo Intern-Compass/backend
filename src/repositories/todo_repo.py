@@ -12,10 +12,7 @@ class TodoRepository:
         self.table = Todo
 
     async def get_todos_by_intern_id(
-        self,
-        conn: AsyncSession,
-        intern_id: UUID,
-        done: bool | None = None
+        self, conn: AsyncSession, intern_id: UUID, done: bool | None = None
     ) -> Sequence[Todo]:
         stmt = (
             select(self.table)
@@ -29,7 +26,9 @@ class TodoRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def create_todo(self, conn: AsyncSession, intern_id: UUID, todo_data: TodoInModel) -> Todo:
+    async def create_todo(
+        self, conn: AsyncSession, intern_id: UUID, todo_data: TodoInModel
+    ) -> Todo:
         todo = Todo(
             intern_id=intern_id,
             title=todo_data.title,
@@ -37,16 +36,16 @@ class TodoRepository:
         )
         conn.add(todo)
         await conn.flush()
-        await  conn.refresh(todo)
+        await conn.refresh(todo)
         return todo
 
-    async def update_todo(self, conn: AsyncSession, todo_id: UUID, todo_data: TodoUpdateModel) -> Todo | None:
+    async def update_todo(
+        self, conn: AsyncSession, todo_id: UUID, todo_data: TodoUpdateModel
+    ) -> Todo | None:
         stmt = (
             update(self.table)
             .where(self.table.id == todo_id)
-            .values(
-                **dict(todo_data.model_dump(exclude_unset=True).items())
-            )
+            .values(**dict(todo_data.model_dump(exclude_unset=True).items()))
             .returning(self.table)
         )
         result = await conn.execute(stmt)

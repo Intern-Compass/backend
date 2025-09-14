@@ -29,6 +29,7 @@ async def display_matches(
 ):
     return await matching_service.display_matches()
 
+
 @router.post("/perform-matching", tags=["Matching"])
 async def perform_matches(
     matching_service: Annotated[MatchingService, Depends()],

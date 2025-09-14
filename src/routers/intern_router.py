@@ -22,16 +22,18 @@ router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
 @router.get("/supervisor", tags=["Dashboard"])
 async def get_intern_supervisor(
     user: Annotated[dict, Depends(get_intern_user)],
-    intern_service: Annotated[InternService, Depends()]
+    intern_service: Annotated[InternService, Depends()],
 ) -> BasicUserDetails:
-    supervisor = await intern_service.get_supervisor_by_intern_id(intern_id=uuid.UUID(user.get("intern_id")))
+    supervisor = await intern_service.get_supervisor_by_intern_id(
+        intern_id=uuid.UUID(user.get("intern_id"))
+    )
     return supervisor
 
 
 @router.get("/tasks", tags=["Tasks", "Dashboard"])
 async def get_intern_tasks(
     user: Annotated[dict, Depends(get_intern_user)],
-    intern_service: Annotated[InternService, Depends()]
+    intern_service: Annotated[InternService, Depends()],
 ) -> list[TaskOutModel]:
     return await intern_service.get_tasks(user_id=uuid.UUID(user.get("sub")))
 
@@ -39,7 +41,7 @@ async def get_intern_tasks(
 @router.get("/projects", tags=["Projects", "Dashboard"])
 async def get_projects(
     user: Annotated[dict, Depends(get_intern_user)],
-    intern_service: Annotated[InternService, Depends()]
+    intern_service: Annotated[InternService, Depends()],
 ) -> list[ProjectOutModel]:
     return await intern_service.get_projects(intern_id=uuid.UUID(user.get("intern_id")))
 
@@ -60,7 +62,9 @@ async def create_intern_todo(
     user: Annotated[dict, Depends(get_intern_user)],
     todo_service: Annotated[TodoService, Depends()],
 ) -> TodoOutModel:
-    return await todo_service.create_todo(user_id=UUID(user.get("sub")), todo_data=todo_data)
+    return await todo_service.create_todo(
+        user_id=UUID(user.get("sub")), todo_data=todo_data
+    )
 
 
 @router.patch("/todos/{todo_id}/complete", tags=["Todos", "Dashboard"])
@@ -69,4 +73,6 @@ async def complete_intern_todo(
     todo_service: Annotated[TodoService, Depends()],
     intern: Annotated[dict, Depends(get_intern_user)],
 ):
-    return await todo_service.complete_todo(todo_id=todo_id, intern_id=UUID(intern.get("intern_id")))
+    return await todo_service.complete_todo(
+        todo_id=todo_id, intern_id=UUID(intern.get("intern_id"))
+    )

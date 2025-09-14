@@ -68,7 +68,11 @@ class UserRepository:
         return user
 
     async def get_by_id(self, conn: AsyncSession, user_id: UUID) -> User | None:
-        stmt = select(self.table).where(self.table.id == user_id).options(selectinload(self.table.skills))
+        stmt = (
+            select(self.table)
+            .where(self.table.id == user_id)
+            .options(selectinload(self.table.skills))
+        )
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 

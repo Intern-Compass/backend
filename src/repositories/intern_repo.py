@@ -11,15 +11,16 @@ from ..models.app_models import Intern, User, Supervisor
 from ..schemas.intern_schemas import InternInModel
 
 
-
 class InternRepository:
     def __init__(self):
         self.table = Intern
 
     async def get_interns_by_ids(self, conn, ids: list[str]) -> list[Intern]:
-        stmt = select(self.table).where(Intern.id.in_(ids)).options(
-                selectinload(Intern.user).selectinload(User.skills)
-            )
+        stmt = (
+            select(self.table)
+            .where(Intern.id.in_(ids))
+            .options(selectinload(Intern.user).selectinload(User.skills))
+        )
         result = await conn.execute(stmt)
         return result.scalars().all()
 
@@ -93,9 +94,7 @@ class InternRepository:
     ):
         intern_select: Select = (
             select(self.table)
-            .where(
-                and_(Intern.id == intern_id, Intern.supervisor_id == None)
-            )
+            .where(and_(Intern.id == intern_id, Intern.supervisor_id == None))
             .options(
                 selectinload(Intern.user).selectinload(User.skills),
                 selectinload(Intern.user).selectinload(User.department),
@@ -124,7 +123,9 @@ class InternRepository:
             .where(self.table.id == intern_id)
             .options(
                 selectinload(self.table.supervisor).selectinload(Supervisor.user),
-                selectinload(self.table.supervisor).selectinload(Supervisor.user).selectinload(User.skills)
+                selectinload(self.table.supervisor)
+                .selectinload(Supervisor.user)
+                .selectinload(User.skills),
             )
         )
 
@@ -132,13 +133,21 @@ class InternRepository:
         return result.scalar_one_or_none()
 
     async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: UUID):
-        stmt = select(self.table).where(self.table.id == intern_id).options(selectinload(self.table.projects))
+        stmt = (
+            select(self.table)
+            .where(self.table.id == intern_id)
+            .options(selectinload(self.table.projects))
+        )
         result = await conn.execute(stmt)
         intern: Intern | None = result.scalar_one()
 
         return intern.projects
 
     async def get_interns_for_supervisor(self, conn: AsyncSession, supervisor_id: UUID):
-        stmt = select(self.table).where(self.table.supervisor_id == supervisor_id).options(selectinload(self.table.user))
+        stmt = (
+            select(self.table)
+            .where(self.table.supervisor_id == supervisor_id)
+            .options(selectinload(self.table.user))
+        )
         result = await conn.execute(stmt)
         return result.scalars().all()

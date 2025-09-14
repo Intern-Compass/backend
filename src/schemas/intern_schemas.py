@@ -15,11 +15,13 @@ class InternInModel(UserInModel):
     internship_start_date: datetime
     internship_end_date: datetime
 
+
 class BasicUserDetails(BaseModel):
     name: str
     email: Annotated[str, EmailStr]
     phone_number: str
     skills: str | None = None
+
 
 class InternOutModel(UserOutModel):
     intern_id: str

@@ -100,9 +100,7 @@ class AuthService:
 
                 if isinstance(new_user, InternInModel):
                     unverified_user: User = await self.intern_repo.create_new_intern(
-                        conn=self.session,
-                        new_intern=new_user,
-                        user=unverified_user
+                        conn=self.session, new_intern=new_user, user=unverified_user
                     )
                 elif isinstance(new_user, SupervisorInModel):
                     unverified_user: User = (

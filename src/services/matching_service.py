@@ -48,24 +48,27 @@ class MatchingService:
                     supervisor_ids.add(supervisor_id)
                     intern_ids.update(intern_id_list)
 
-
-            supervisors = await self.supervisor_repo.get_supervisors_by_ids(conn=self.session, ids=list(supervisor_ids))
+            supervisors = await self.supervisor_repo.get_supervisors_by_ids(
+                conn=self.session, ids=list(supervisor_ids)
+            )
             supervisor_map = {str(s.id): s for s in supervisors}
 
-            interns = await self.intern_repo.get_interns_by_ids(conn=self.session, ids=list(intern_ids))
+            interns = await self.intern_repo.get_interns_by_ids(
+                conn=self.session, ids=list(intern_ids)
+            )
             intern_map = {str(i.id): i for i in interns}
 
             for department, department_match in matches.items():
                 for supervisor_id, intern_id_list in department_match.items():
-
                     supervisor_details = supervisor_map[supervisor_id]
 
                     formatted_supervisor: BasicUserDetails = BasicUserDetails(
                         name=supervisor_details.user.firstname,
                         email=supervisor_details.user.email,
                         phone_number=supervisor_details.user.phone_number,
-                        skills= ", ".join([skill.name for skill in supervisor_details.user.skills])
-
+                        skills=", ".join(
+                            [skill.name for skill in supervisor_details.user.skills]
+                        ),
                     )
 
                     formatted_intern_list: list[BasicUserDetails] = [
@@ -73,15 +76,21 @@ class MatchingService:
                             name=intern_map[intern_id].user.firstname,
                             email=intern_map[intern_id].user.email,
                             phone_number=intern_map[intern_id].user.phone_number,
-                            skills=", ".join([skill.name for skill in intern_map[intern_id].user.skills])
+                            skills=", ".join(
+                                [
+                                    skill.name
+                                    for skill in intern_map[intern_id].user.skills
+                                ]
+                            ),
                         )
                         for intern_id in intern_id_list
                     ]
 
-                    match_details[department].append((formatted_supervisor, formatted_intern_list))
+                    match_details[department].append(
+                        (formatted_supervisor, formatted_intern_list)
+                    )
 
             return match_details
-
 
     async def perform_bulk_matching(self):
         async with self.session.begin():

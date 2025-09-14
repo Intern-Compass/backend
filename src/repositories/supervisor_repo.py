@@ -33,9 +33,11 @@ class SupervisorRepository:
         return user
 
     async def get_supervisors_by_ids(self, conn, ids: list[str]) -> list[Supervisor]:
-        stmt = select(self.table).where(Supervisor.id.in_(ids)).options(
-                selectinload(Supervisor.user).selectinload(User.skills)
-            )
+        stmt = (
+            select(self.table)
+            .where(Supervisor.id.in_(ids))
+            .options(selectinload(Supervisor.user).selectinload(User.skills))
+        )
         result = await conn.execute(stmt)
         return result.scalars().all()
 
@@ -80,7 +82,9 @@ class SupervisorRepository:
         result: Result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_supervisor_by_intern_user_id(self, conn: AsyncSession, intern_user_id: UUID) -> Supervisor | None:
+    async def get_supervisor_by_intern_user_id(
+        self, conn: AsyncSession, intern_user_id: UUID
+    ) -> Supervisor | None:
         stmt = (
             select(self.table)
             .join(Intern, Intern.supervisor_id == self.table.id)
@@ -89,7 +93,9 @@ class SupervisorRepository:
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_supervisor_by_intern_id(self, conn: AsyncSession, intern_id: UUID) -> Supervisor | None:
+    async def get_supervisor_by_intern_id(
+        self, conn: AsyncSession, intern_id: UUID
+    ) -> Supervisor | None:
         stmt = (
             select(self.table)
             .where(Intern.id == intern_id)
