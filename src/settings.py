@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int
     SMTP_PASSWORD: str
 
+    ENVIRONMENT: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
     )

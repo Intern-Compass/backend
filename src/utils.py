@@ -14,6 +14,7 @@ from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 from .logger import logger
 from .schemas.user_schemas import UserOutModel, UserType
 from .infra.token import InvalidTokenError, AccessToken
+from .settings import settings
 
 ph: PasswordHasher = PasswordHasher()
 
@@ -85,4 +86,8 @@ def normalize_string(string: str) -> str:
     return string.lower().strip()
 
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/hour"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["100/hour"],
+    enabled=settings.ENVIRONMENT == "production"
+)
