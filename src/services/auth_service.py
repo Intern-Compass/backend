@@ -234,7 +234,7 @@ class AuthService:
                 send_email,
                 user_email,
                 context=ForgotPasswordContext(
-                    reset_link=f"https://{settings.FRONTEND_URL}/reset_link?token={token}"
+                    reset_link=f"{settings.FRONTEND_URL}/reset_link?token={token}"
                 ),
             )
         response = {
