@@ -7,13 +7,14 @@ from argon2 import PasswordHasher
 from fastapi import HTTPException
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordBearer
-import jwt
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 
-from src.logger import logger
-from src.schemas.user_schemas import UserOutModel, UserType
-from src.settings import settings
+from .logger import logger
+from .schemas.user_schemas import UserOutModel, UserType
 from .infra.token import InvalidTokenError, AccessToken
+from .settings import settings
 
 ph: PasswordHasher = PasswordHasher()
 
@@ -83,3 +84,10 @@ def get_supervisor_user(payload: Annotated[UserOutModel, Depends(get_current_use
 
 def normalize_string(string: str) -> str:
     return string.lower().strip()
+
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["100/hour"],
+    enabled=settings.ENVIRONMENT == "production"
+)

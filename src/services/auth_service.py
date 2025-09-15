@@ -63,7 +63,6 @@ class AuthService:
         self.skill_repo = skill_repo
         self.background_task = background_task
 
-    # TODO: Rate limit
     async def create_unverified_new_user(
         self, new_user: UserInModel | InternInModel | SupervisorInModel
     ) -> dict[str, str]:
@@ -197,19 +196,7 @@ class AuthService:
         else:
             user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
 
-        print(user_to_login.type)
         access_token: str = AccessToken.new(user=user_to_login)
-
-        # new_refresh_token: str = await generate_refresh_token(
-        #     existing_user.email, self.token_repo
-        # )
-        # set_custom_cookie(
-        #     response=response,
-        #     key="refresh_token",
-        #     value=new_refresh_token,
-        #     path="/auth",
-        #     max_age=60 * 60 * 24 * 7,
-        # )
 
         return {
             "access_token": access_token,
@@ -232,7 +219,6 @@ class AuthService:
             await self.code_repo.delete_code(conn=conn, value=code)
             return verification_code
 
-    # TODO: Rate limit
     async def request_reset_password(self, email: str):
         async with self.session.begin():
             user: User = await self.user_repo.get_user_by_email_or_phone(
@@ -248,7 +234,7 @@ class AuthService:
                 send_email,
                 user_email,
                 context=ForgotPasswordContext(
-                    reset_link=f"https://{settings.FRONTEND_URL}/reset_link?token={token}"
+                    reset_link=f"{settings.FRONTEND_URL}/reset_link?token={token}"
                 ),
             )
         response = {
