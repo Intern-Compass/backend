@@ -35,7 +35,7 @@ async def get_intern_tasks(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
 ) -> list[TaskOutModel]:
-    return await intern_service.get_tasks(user_id=uuid.UUID(user.user_id))
+    return await intern_service.get_intern_tasks(user_id=uuid.UUID(user.user_id))
 
 
 @router.get("/projects", tags=["Projects", "Dashboard"])
@@ -43,7 +43,7 @@ async def get_projects(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
 ) -> list[ProjectOutModel]:
-    return await intern_service.get_projects(intern_id=uuid.UUID(user.intern_id))
+    return await intern_service.get_intern_projects(intern_id=uuid.UUID(user.intern_id))
 
 
 @router.get("/todos", tags=["Todos", "Dashboard"])

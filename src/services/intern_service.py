@@ -11,6 +11,7 @@ from typing import Annotated
 
 from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_404_NOT_FOUND
 
 from ..db import get_db_session
 from ..models.app_models import Intern, Supervisor
@@ -20,7 +21,6 @@ from ..repositories.supervisor_repo import SupervisorRepository
 from ..repositories.task_repo import TaskRepository
 from ..schemas.intern_schemas import BasicUserDetails
 from ..schemas.project_schemas import ProjectOutModel
-from ..schemas.supervisor_schemas import SupervisorOutModel
 from ..schemas.task_schemas import TaskOutModel
 
 
@@ -47,7 +47,12 @@ class InternService:
                 conn=self.session, intern_id=intern_id
             )
             if not intern:
-                raise HTTPException(status_code=404, detail="Intern not found")
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+
+            if not intern.supervisor:
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="You have not been assigned a supervisor yet."
+                )
 
             return BasicUserDetails(
                 name=intern.supervisor.user.firstname,
@@ -58,7 +63,7 @@ class InternService:
                 ),
             )
 
-    async def get_tasks(self, user_id: uuid.UUID) -> list[TaskOutModel]:
+    async def get_intern_tasks(self, user_id: uuid.UUID) -> list[TaskOutModel]:
         async with self.session.begin():
             intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
             if not intern:
@@ -67,7 +72,7 @@ class InternService:
                 self.session, intern.id
             )
 
-    async def get_projects(self, intern_id: uuid.UUID) -> list[ProjectOutModel]:
+    async def get_intern_projects(self, intern_id: uuid.UUID) -> list[ProjectOutModel]:
         async with self.session.begin():
             return [
                 ProjectOutModel.from_model(project)
@@ -92,15 +97,3 @@ class InternService:
 
         return unmatched_interns
 
-    async def get_intern_supervisor(self, intern_id: str):
-        async with self.session.begin():
-            intern: Intern = await self.intern_repo.get_intern_by_id(
-                conn=self.session, intern_id=intern_id
-            )
-            supervisor_id = intern.supervisor_id
-
-            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
-                conn=self.session, supervisor_id=str(supervisor_id)
-            )
-
-            return SupervisorOutModel.from_supervisor(supervisor.user)
