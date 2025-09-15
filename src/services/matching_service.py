@@ -38,7 +38,7 @@ class MatchingService:
                 str, list[tuple[BasicUserDetails, list[BasicUserDetails]]]
             ] = defaultdict(list)
 
-            matches: dict =  matcher(supervisors_from_db, unmatched_interns_from_db)
+            matches: dict = matcher(supervisors_from_db, unmatched_interns_from_db)
 
             supervisor_ids: set[str] = set()
             intern_ids: set[str] = set()

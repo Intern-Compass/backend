@@ -40,8 +40,9 @@ async def create_intern(
 @router.post("/verify-code")
 @limiter.limit("5/minute")
 async def verify_user_and_create(
-        request: Request,
-    code: VerificationCode, general_user_service: Annotated[AuthService, Depends()]
+    request: Request,
+    code: VerificationCode,
+    general_user_service: Annotated[AuthService, Depends()],
 ):
     return await general_user_service.verify_user(code=code.code)
 

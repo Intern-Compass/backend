@@ -20,12 +20,11 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
+
 @app.exception_handler(RateLimitExceeded)
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"detail": "Rate limit exceeded"}
-    )
+    return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+
 
 ORIGINS = ["*"]
 # noinspection PyTypeChecker

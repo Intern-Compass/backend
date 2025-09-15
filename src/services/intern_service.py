@@ -47,11 +47,14 @@ class InternService:
                 conn=self.session, intern_id=intern_id
             )
             if not intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
 
             if not intern.supervisor:
                 raise HTTPException(
-                    status_code=HTTP_404_NOT_FOUND, detail="You have not been assigned a supervisor yet."
+                    status_code=HTTP_404_NOT_FOUND,
+                    detail="You have not been assigned a supervisor yet.",
                 )
 
             return BasicUserDetails(
@@ -96,4 +99,3 @@ class InternService:
             ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
 
         return unmatched_interns
-
