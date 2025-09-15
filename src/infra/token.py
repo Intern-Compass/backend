@@ -1,7 +1,7 @@
 from abc import ABC
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from jwt import PyJWTError, decode, encode
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,12 +53,14 @@ class BaseToken[DecodedType](ABC):
         if isinstance(sub, UUID):
             sub = str(sub)
         now = datetime.now(UTC)
+        expires_at = datetime.now(UTC) + cls.token_type.lifetime
+        token_in_db = await cls._create_token_in_db(conn=conn, expires_at=expires_at)
         return encode(
             payload={
                 "data": data,
-                "exp": now + cls.token_type.lifetime,
+                "exp": expires_at,
                 "iat": now,
-                "jti": uuid4().hex,
+                "jti": token_in_db.jti,
                 "sub": sub,
                 "type": cls.token_type,
             },
@@ -93,9 +95,9 @@ class AccessToken(BaseToken[UserOutModel]):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def new(cls, user: UserOutModel) -> str:
+    async def new(cls, conn: AsyncSession, user: UserOutModel) -> str:
         user_id = user.user_id
-        return super().new(sub=user_id, data=user.model_dump())
+        return await super().new(conn=conn, sub=user_id, data=user.model_dump())
 
     @classmethod
     def decode(cls, token: str) -> UserOutModel:
@@ -117,8 +119,8 @@ class PasswordResetToken(BaseToken):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def new(cls, user_id: UUID) -> str:
-        return super().new(sub=user_id)
+    async def new(cls, conn: AsyncSession, user_id: UUID) -> str:
+        return await super().new(conn=conn, sub=user_id)
 
     @classmethod
     def decode(cls, token: str) -> str:
