@@ -1,6 +1,5 @@
 from src.common import DepartmentEnum
 from src.models import User
-from src.models.app_models import Supervisor
 from src.schemas import UserInModel, UserOutModel
 
 

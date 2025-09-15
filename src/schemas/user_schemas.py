@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -21,7 +22,7 @@ class UserInModel(BaseModel):
 
 
 class UserOutModel(BaseModel):
-    user_id: str
+    user_id: Annotated[str, UUID]
     firstname: str
     lastname: str
     phone_number: str
@@ -50,7 +51,7 @@ class UserOutModel(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    code: str
+    token: str
     password: str
 
 

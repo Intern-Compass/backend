@@ -1,37 +1,42 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from fastapi import HTTPException, BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import (
-    HTTP_409_CONFLICT,
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
+    HTTP_409_CONFLICT,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-from src.repositories.general_user_repo import UserRepository
-from src.models.app_models import User, VerificationCode
-from src.db import get_db_session
-from src.repositories.intern_repo import InternRepository
-from src.repositories.verification_code_repo import VerificationCodeRepository
-from src.schemas import UserInModel, InternInModel
-from src.schemas.user_schemas import UserOutModel, UserType
-from src.utils import (
-    generate_access_token,
-    password_is_correct,
-    hash_password,
+from ..common import UserType
+from ..infra.token import PasswordResetToken, AccessToken
+from ..db import get_db_session
+from ..models.app_models import User, VerificationCode
+from ..repositories.general_user_repo import UserRepository
+from ..repositories.intern_repo import InternRepository
+from ..repositories.verification_code_repo import VerificationCodeRepository
+from ..schemas import InternInModel, UserInModel
+from ..schemas.user_schemas import UserOutModel
+from ..settings import settings
+from ..utils import (
     generate_random_code,
+    hash_password,
     normalize_string,
+    password_is_correct,
 )
-from ..infra.email.contexts import (
-    VerifyEmailContext,
-    EmailVerifiedContext,
-    UpdatedUserContext,
-)
+
 from ..infra.email import send_email
+from ..infra.email.contexts import (
+    EmailVerifiedContext,
+    ForgotPasswordContext,
+    UpdatedUserContext,
+    VerifyEmailContext,
+)
 from ..logger import logger
 from ..repositories import SkillRepository
 from ..repositories.supervisor_repo import SupervisorRepository
@@ -153,9 +158,7 @@ class AuthService:
             else:
                 user_to_login = UserOutModel.from_user(verified_user)
 
-            access_token: str = generate_access_token(
-                user_to_login=user_to_login,
-            )
+            access_token: str = AccessToken.new(user=user_to_login)
 
         # Send confirmation mail once user has been created.
         user_normalized_email: str = normalize_string(verified_user.email)
@@ -194,7 +197,8 @@ class AuthService:
         else:
             user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
 
-        access_token: str = generate_access_token(user_to_login)
+        print(user_to_login.type)
+        access_token: str = AccessToken.new(user=user_to_login)
 
         # new_refresh_token: str = await generate_refresh_token(
         #     existing_user.email, self.token_repo
@@ -234,68 +238,32 @@ class AuthService:
             user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session, email=email
             )
-            if not user:
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-                logger.info(
-                    f"No user with email {email} exists to send verification code."
-                )
+        if not user:
+            logger.info(f"No user with email {email} exists to send verification code.")
 
-            user_email: str | None = None
-            send_code: str | None = None
-
-            if user and not user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.create_code(
-                    conn=self.session, user_id=user.id, code=code
-                )
-                send_code = code
-                user_email = user.email
-
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
-            elif user and user.verification_code:
-                code = generate_random_code()
-                await self.code_repo.upsert_code_with_user_id(
-                    conn=self.session, user_id=user.id, value=code
-                )
-
-                send_code = code
-                user_email = user.email
-
-                response = {
-                    "detail": "If this email exists, a password reset email will be sent."
-                }
-
-        if user_email:
+        if user:
+            token = PasswordResetToken.new(user_id=user.id)
+            user_email = user.email
             self.background_task.add_task(
                 send_email,
                 user_email,
-                context=VerifyEmailContext(send_code=send_code),
+                context=ForgotPasswordContext(
+                    reset_link=f"https://{settings.FRONTEND_URL}/reset_link?token={token}"
+                ),
             )
+        response = {
+            "detail": "If this email exists, a password reset email will be sent."
+        }
         return response
 
-    async def verify_code_and_reset_password(self, code: str, new_password: str):
-        async with self.session.begin():
-            verified_code: bool | VerificationCode = await self._verify_code(
-                code=code, conn=self.session
-            )
-
-            if not verified_code:
-                raise HTTPException(
-                    status_code=HTTP_400_BAD_REQUEST, detail="Invalid verification code"
-                )
-
-            new_password: str = hash_password(new_password)
-            values_to_update: dict = {"password": new_password}
-            updated_user: User = await self.user_repo.update(
-                conn=self.session,
-                user_id=verified_code.user_id,
-                values=values_to_update,
-            )
+    async def reset_password(self, user_id: UUID, new_password: str):
+        new_password: str = hash_password(new_password)
+        values_to_update: dict = {"password": new_password}
+        updated_user: User = await self.user_repo.update(
+            conn=self.session,
+            user_id=user_id,
+            values=values_to_update,
+        )
 
         self.background_task.add_task(
             send_email,

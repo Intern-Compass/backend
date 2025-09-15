@@ -2,18 +2,13 @@
 Global test configuration and fixtures.
 """
 
-import asyncio
 from typing import AsyncGenerator
 
-import pytest
 import pytest_asyncio
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from src.main import app
-from src.settings import settings
 from src.models.app_models import Base
-from src.db import get_db_session
+from src.settings import settings
 
 # Use a separate database for testing
 TEST_DB_URL = f"{settings.DB_URL}_test"  # Ensure there is a DB in the DB server with this name. This should be okay for local dev, but CI workflow should start fresh Docker containers for each test run.

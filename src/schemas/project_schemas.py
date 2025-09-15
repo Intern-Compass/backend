@@ -17,7 +17,7 @@ class ProjectOutModel(BaseModel):
     title: str
     description: str
     supervisor_id: str
-    division_id: str
+    department_id: str
     created_at: datetime
 
     @classmethod
@@ -27,6 +27,6 @@ class ProjectOutModel(BaseModel):
             title=project.title,
             description=project.description,
             supervisor_id=str(project.supervisor_id),
-            division_id=str(project.division_id),
+            department_id=str(project.department_id),
             created_at=project.created_at,
         )

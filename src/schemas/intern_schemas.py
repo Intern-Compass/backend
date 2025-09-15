@@ -1,7 +1,10 @@
 from datetime import datetime
+from typing import Annotated
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
+from .skill_schemas import SkillRes
 from ..common import DepartmentEnum
 from ..models import User
 from ..schemas import UserInModel, UserOutModel
@@ -13,13 +16,16 @@ class InternInModel(UserInModel):
     internship_start_date: datetime
     internship_end_date: datetime
 
-class ISupervisor(BaseModel):
+
+class BasicUserDetails(BaseModel):
     name: str
-    email: EmailStr
+    email: Annotated[str, EmailStr]
     phone_number: str
+    skills: str | None = None
+
 
 class InternOutModel(UserOutModel):
-    intern_id: str
+    intern_id: Annotated[str, UUID]
     bio: str | None = None
     school: str | None = None
     internship_start_date: str
