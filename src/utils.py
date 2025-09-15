@@ -84,4 +84,5 @@ def get_supervisor_user(payload: Annotated[UserOutModel, Depends(get_current_use
 def normalize_string(string: str) -> str:
     return string.lower().strip()
 
+
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/hour"])

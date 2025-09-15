@@ -66,6 +66,7 @@ async def create_intern_todo(
         user_id=UUID(user.user_id), todo_data=todo_data
     )
 
+
 @router.patch("/todos/{todo_id}/complete", tags=["Todos", "Dashboard"])
 async def complete_intern_todo(
     todo_id: UUID4,
