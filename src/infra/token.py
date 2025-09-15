@@ -38,12 +38,13 @@ class BaseToken[DecodedType](ABC):
     def new(cls, sub: str | UUID, data: dict | None = None) -> str:
         if isinstance(sub, UUID):
             sub = str(sub)
+        now = datetime.now(UTC)
         return encode(
             payload={
                 "data": data,
-                "exp": cls.token_type.lifetime.total_seconds(),
-                "iat": datetime.now(UTC),
-                "jti": uuid4(),
+                "exp": now + cls.token_type.lifetime,
+                "iat": now,
+                "jti": uuid4().hex,
                 "sub": sub,
                 "type": cls.token_type,
             },
