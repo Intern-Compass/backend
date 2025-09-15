@@ -4,6 +4,7 @@ from enum import StrEnum
 from uuid import UUID
 
 from jwt import PyJWTError, decode, encode
+from sqlalchemy import exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common import UserType
@@ -69,7 +70,15 @@ class BaseToken[DecodedType](ABC):
         )
 
     @classmethod
-    def decode(cls, token: str) -> DecodedType:
+    async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
+        token_exists = await conn.scalar(
+            exists(Token.__table__).where(Token.jti == jti).select()
+        )
+        if not token_exists:
+            raise InvalidTokenError
+
+    @classmethod
+    async def decode(cls, conn: AsyncSession, token: str) -> DecodedType:
         # Actual decoding
         try:
             claims: dict = decode(
@@ -80,6 +89,13 @@ class BaseToken[DecodedType](ABC):
 
         # Validating the token type
         if claims.get("type") != cls.token_type.value:
+            raise InvalidTokenError
+
+        # Ensuring the token is in the database
+        if claims.get("jti"):
+            jti = claims["jti"]
+            await cls._ensure_token_in_db(conn=conn, jti=jti)
+        else:
             raise InvalidTokenError
 
         # # Attempting to convert sub to UUID
@@ -100,8 +116,8 @@ class AccessToken(BaseToken[UserOutModel]):
         return await super().new(conn=conn, sub=user_id, data=user.model_dump())
 
     @classmethod
-    def decode(cls, token: str) -> UserOutModel:
-        claims = super().decode(token)
+    async def decode(cls, conn: AsyncSession, token: str) -> UserOutModel:
+        claims = await super().decode(conn=conn, token=token)
         data = claims["data"]
         data["user_id"] = claims["sub"]
         data["type"] = UserType(data["type"])
@@ -123,7 +139,7 @@ class PasswordResetToken(BaseToken):
         return await super().new(conn=conn, sub=user_id)
 
     @classmethod
-    def decode(cls, token: str) -> str:
-        claims = super().decode(token)
+    async def decode(cls, conn: AsyncSession, token: str) -> str:
+        claims = await super().decode(conn=conn, token=token)
         user_id = claims["sub"]
         return user_id
