@@ -4,8 +4,10 @@ from enum import StrEnum
 from uuid import UUID, uuid4
 
 from jwt import PyJWTError, decode, encode
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common import UserType
+from ..models.app_models import Token
 from ..schemas import UserOutModel
 from ..schemas.intern_schemas import InternOutModel
 from ..schemas.supervisor_schemas import SupervisorOutModel
@@ -35,7 +37,19 @@ class BaseToken[DecodedType](ABC):
     token_type: TokenType
 
     @classmethod
-    def new(cls, sub: str | UUID, data: dict | None = None) -> str:
+    async def _create_token_in_db(
+        cls, conn: AsyncSession, expires_at: datetime
+    ) -> Token:
+        new_token = Token(expires_at=expires_at)
+        conn.add(new_token)
+        await conn.flush()
+        await conn.refresh(new_token)
+        return new_token
+
+    @classmethod
+    async def new(
+        cls, conn: AsyncSession, sub: str | UUID, data: dict | None = None
+    ) -> str:
         if isinstance(sub, UUID):
             sub = str(sub)
         now = datetime.now(UTC)
