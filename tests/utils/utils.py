@@ -1,8 +1,11 @@
+"""Utilities for our Tests"""
+
 from datetime import datetime, date
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from src.models.app_models import User, VerificationCode, Intern
+from src.models.app_models import Supervisor, User, VerificationCode, Intern
+from src.schemas.supervisor_schemas import SupervisorInModel
 from src.schemas.user_schemas import UserInModel
 from src.schemas.intern_schemas import InternInModel
 from src.common import DepartmentEnum, UserType
@@ -35,7 +38,7 @@ def create_mock_user(
     return mock_user
 
 
-def create_mock_intern(mock_user: User) -> Intern:
+def create_mock_intern(mock_user: User) -> User:
     intern = Intern(
         id=uuid4(),
         user_id=mock_user.id,
@@ -44,7 +47,18 @@ def create_mock_intern(mock_user: User) -> Intern:
         end_date=date(2025, 9, 1),
         user=mock_user,
     )
-    return intern
+    mock_user.intern = intern
+    return mock_user
+
+def create_mock_supervisor(mock_user: User) -> Supervisor:
+    supervisor = Supervisor(
+        id=uuid4(),
+        user_id=mock_user.id,
+        position="Manager Emerging Technologies",
+        user=mock_user,
+    )
+    mock_user.supervisor = supervisor
+    return mock_user
 
 
 def create_user_in_model() -> UserInModel:
@@ -64,18 +78,32 @@ def create_user_in_model() -> UserInModel:
 def create_intern_in_model() -> InternInModel:
     return InternInModel(
         firstname="Test",
-        lastname="Intern",
-        phone_number="0987654321",
-        email="intern@example.com",
+        lastname="User",
+        phone_number="1234567890",
+        email="test@example.com",
         password="strongpassword123",
-        skills=[SkillCreate(name="Teamwork")],
-        date_of_birth=datetime(2002, 5, 10),
-        department=DepartmentEnum.HUMAN_RESOURCES,
-        work_location="Office",
+        skills=[SkillCreate(name="Python"), SkillCreate(name="FastAPI")],
+        date_of_birth=datetime(2000, 1, 1),
+        department=DepartmentEnum.INFORMATION_TECHNOLOGY,
+        work_location="Remote",
         bio="developer",
         school="Unilag",
         internship_start_date=datetime.now(),
         internship_end_date=datetime.now(),
+    )
+
+def create_supervisor_in_model() -> SupervisorInModel:
+    return SupervisorInModel(
+        firstname="Test",
+        lastname="User",
+        phone_number="1234567890",
+        email="test@example.com",
+        password="strongpassword123",
+        skills=[SkillCreate(name="Python"), SkillCreate(name="FastAPI")],
+        date_of_birth=datetime(2000, 1, 1),
+        department=DepartmentEnum.INFORMATION_TECHNOLOGY,
+        work_location="Remote",
+        position="Manager Emerging Technologies"
     )
 
 

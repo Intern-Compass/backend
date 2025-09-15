@@ -31,11 +31,18 @@ def mock_user_repo():
 def mock_intern_repo():
     return AsyncMock()
 
+@pytest.fixture
+def mock_supervisor_repo():
+    return AsyncMock()
+
 
 @pytest.fixture
 def mock_code_repo():
     return AsyncMock()
 
+@pytest.fixture
+def mock_skill_repo():
+    return AsyncMock()
 
 @pytest.fixture
 def mock_background_tasks():
@@ -47,13 +54,17 @@ def auth_service(
     mock_session,
     mock_user_repo,
     mock_intern_repo,
+    mock_supervisor_repo,
     mock_code_repo,
+    mock_skill_repo,
     mock_background_tasks,
 ):
     return AuthService(
         session=mock_session,
         user_repo=mock_user_repo,
         intern_repo=mock_intern_repo,
+        supervisor_repo=mock_supervisor_repo,
         code_repo=mock_code_repo,
+        skill_repo=mock_skill_repo,
         background_task=mock_background_tasks,
     )
