@@ -2,7 +2,7 @@
 
 from datetime import datetime, date
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from src.models.app_models import Supervisor, User, VerificationCode, Intern
 from src.schemas.supervisor_schemas import SupervisorInModel
@@ -16,7 +16,7 @@ from src.utils import normalize_string
 def create_mock_user(
     verified: bool, user_type: UserType = UserType.INTERN
 ) -> MagicMock:
-    mock_user = MagicMock()
+    mock_user = MagicMock(spec=User)
     user_email = "test@example.com"
 
     mock_user.id = uuid4()
@@ -39,25 +39,27 @@ def create_mock_user(
 
 
 def create_mock_intern(mock_user: User) -> User:
-    intern = Intern(
-        id=uuid4(),
-        user_id=mock_user.id,
-        bio="A test intern bio.",
-        start_date=date(2025, 6, 1),
-        end_date=date(2025, 9, 1),
-        user=mock_user,
-    )
-    mock_user.intern = intern
+    mock_intern = MagicMock(spec=Intern)
+    mock_intern.id = uuid4()
+    mock_intern.user_id = mock_user.id
+    mock_intern.bio = "A test intern bio."
+    mock_intern.school = "Unilag"
+    mock_intern.start_date = date(2025, 6, 1)
+    mock_intern.end_date = date(2025, 9, 1)
+    mock_intern.user = mock_user
+
+    mock_user.intern = mock_intern
     return mock_user
 
+
 def create_mock_supervisor(mock_user: User) -> Supervisor:
-    supervisor = Supervisor(
-        id=uuid4(),
-        user_id=mock_user.id,
-        position="Manager Emerging Technologies",
-        user=mock_user,
-    )
-    mock_user.supervisor = supervisor
+    mock_supervisor = MagicMock(spec=Supervisor)
+    mock_supervisor.id = uuid4()
+    mock_supervisor.user_id = mock_user.id
+    mock_supervisor.position = "Manager Emerging Technologies"
+    mock_supervisor.user = mock_user
+
+    mock_user.supervisor = mock_supervisor
     return mock_user
 
 
@@ -92,6 +94,7 @@ def create_intern_in_model() -> InternInModel:
         internship_end_date=datetime.now(),
     )
 
+
 def create_supervisor_in_model() -> SupervisorInModel:
     return SupervisorInModel(
         firstname="Test",
@@ -103,9 +106,9 @@ def create_supervisor_in_model() -> SupervisorInModel:
         date_of_birth=datetime(2000, 1, 1),
         department=DepartmentEnum.INFORMATION_TECHNOLOGY,
         work_location="Remote",
-        position="Manager Emerging Technologies"
+        position="Manager Emerging Technologies",
     )
 
 
-def create_mock_verification_code(user_id=None) -> VerificationCode:
+def create_mock_verification_code(user_id: UUID) -> VerificationCode:
     return VerificationCode(id=uuid4(), user_id=user_id or uuid4(), value="123456")
