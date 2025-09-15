@@ -65,7 +65,7 @@ async def reset_password(
     details: ResetPasswordRequest,
     auth_service: Annotated[AuthService, Depends()],
 ):
-    user_id: UUID = PasswordResetToken.decode(details.token)
+    user_id: str = PasswordResetToken.decode(details.token)
     return await auth_service.reset_password(
-        user_id=user_id, new_password=details.password
+        user_id=UUID(user_id), new_password=details.password
     )

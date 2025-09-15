@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -24,7 +25,7 @@ class BasicUserDetails(BaseModel):
 
 
 class InternOutModel(UserOutModel):
-    intern_id: str
+    intern_id: Annotated[str, UUID]
     bio: str | None = None
     school: str | None = None
     internship_start_date: str

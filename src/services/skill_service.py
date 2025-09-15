@@ -1,17 +1,15 @@
-from typing import Annotated
 import uuid
+from typing import Annotated
 from uuid import UUID
-
-from sqlalchemy.exc import IntegrityError
 
 from fastapi import HTTPException
 from fastapi.params import Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_409_CONFLICT
 
 from src.db import get_db_session
 from src.models import User
-from src.models.app_models import Skill
 from src.repositories import SkillRepository, UserRepository
 from src.schemas.skill_schemas import SkillCreate, SkillRes
 

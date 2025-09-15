@@ -7,7 +7,7 @@ from pydantic import UUID4
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from ..schemas.intern_schemas import ISupervisor, InternOutModel, BasicUserDetails
+from ..schemas.intern_schemas import InternOutModel, BasicUserDetails
 from ..schemas.project_schemas import ProjectOutModel
 from ..schemas.task_schemas import TaskOutModel
 from ..schemas.todo_schemas import TodoInModel, TodoOutModel

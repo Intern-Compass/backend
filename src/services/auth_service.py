@@ -197,6 +197,7 @@ class AuthService:
         else:
             user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
 
+        print(user_to_login.type)
         access_token: str = AccessToken.new(user=user_to_login)
 
         # new_refresh_token: str = await generate_refresh_token(

@@ -40,14 +40,6 @@ def generate_random_code() -> str:
     return str(random.randint(100000, 999999))
 
 
-def decode_token(token: str) -> dict:
-    payload: dict = jwt.decode(
-        token, key=settings.SECRET_KEY, algorithms=[settings.ALGO]
-    )
-
-    return payload
-
-
 oauth_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
@@ -64,7 +56,7 @@ def get_current_user(
         payload: UserOutModel = AccessToken.decode(token=token)
         return payload
     except InvalidTokenError as e:
-        logger.error(str(e))
+        logger.error(e)
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED, detail="Session expired, log in again"
         )

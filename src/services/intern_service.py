@@ -8,13 +8,12 @@ This module will handle:
 
 import uuid
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_db_session
-from ..models.app_models import Intern, Project, Supervisor
+from ..models.app_models import Intern, Supervisor
 from ..repositories.intern_repo import InternRepository
 from ..repositories.project_repo import ProjectRepository
 from ..repositories.supervisor_repo import SupervisorRepository

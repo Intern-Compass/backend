@@ -66,11 +66,11 @@ class BaseToken[DecodedType](ABC):
         if claims.get("type") != cls.token_type.value:
             raise InvalidTokenError
 
-        # Attempting to convert sub to UUID
-        try:
-            claims["sub"] = UUID(claims["sub"])
-        except ValueError:
-            pass
+        # # Attempting to convert sub to UUID
+        # try:
+        #     claims["sub"] = UUID(claims["sub"])
+        # except ValueError:
+        #     pass
         return claims
 
 
@@ -107,7 +107,7 @@ class PasswordResetToken(BaseToken):
         return super().new(sub=user_id)
 
     @classmethod
-    def decode(cls, token: str) -> UUID:
+    def decode(cls, token: str) -> str:
         claims = super().decode(token)
         user_id = claims["sub"]
         return user_id
