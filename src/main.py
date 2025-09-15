@@ -1,19 +1,31 @@
 import time
 
 from fastapi import FastAPI
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from src.routers.supervisor_router import router as supervisor_router
-from src.routers.auth_router import router as auth_router
-from src.routers.skill_router import router as skill_router
-from src.routers.intern_router import router as intern_router
+from .routers.supervisor_router import router as supervisor_router
+from .routers.auth_router import router as auth_router
+from .routers.skill_router import router as skill_router
+from .routers.intern_router import router as intern_router
 
-from src.logger import logger
+from .logger import logger
+from .utils import limiter
 
 app = FastAPI()
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded"}
+    )
 
 ORIGINS = ["*"]
 # noinspection PyTypeChecker
@@ -46,7 +58,8 @@ async def custom_exception_handler(_: Request, exc: Exception):
 
 
 @app.get("/")
-async def greet():
+# @limiter.limit("5/minute")
+async def greet(request: Request, response: Response):
     return "Hello World"
 
 
