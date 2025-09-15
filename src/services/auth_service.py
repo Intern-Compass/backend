@@ -166,7 +166,7 @@ class AuthService:
             user_normalized_email,
             context=EmailVerifiedContext(),
         )
-        return {"access_token": access_token, "token_type": "Bearer"}
+        return {"access_token": access_token, "user_type": user_to_login.type, "token_type": "Bearer"}
 
     async def login(self, username: str, password: str):
         existing_user: User = await self.user_repo.get_user_by_email_or_phone(
@@ -200,6 +200,7 @@ class AuthService:
 
         return {
             "access_token": access_token,
+            "user_type": user_to_login.type,
             "token_type": "Bearer",
         }
 
