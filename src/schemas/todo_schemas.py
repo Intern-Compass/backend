@@ -7,7 +7,7 @@ from src.models.app_models import Task, Todo
 
 class TodoInModel(BaseModel):
     title: str
-    details: str
+    description: str
 
 
 class TodoUpdateModel(BaseModel):

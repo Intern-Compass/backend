@@ -29,10 +29,10 @@ class TodoRepository:
     async def create_todo(
         self, conn: AsyncSession, intern_id: UUID, todo_data: TodoInModel
     ) -> Todo:
-        todo = Todo(
+        todo = self.table(
             intern_id=intern_id,
             title=todo_data.title,
-            details=todo_data.details,
+            details=todo_data.description,
         )
         conn.add(todo)
         await conn.flush()
