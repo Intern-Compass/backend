@@ -43,7 +43,7 @@ class BaseToken[DecodedType](ABC):
                 "data": data,
                 "exp": cls.token_type.lifetime.total_seconds(),
                 "iat": datetime.now(UTC),
-                "jti": uuid4(),
+                "jti": uuid4().hex,
                 "sub": sub,
                 "type": cls.token_type,
             },
