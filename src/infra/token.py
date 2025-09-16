@@ -1,7 +1,7 @@
 from abc import ABC
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from jwt import PyJWTError, decode, encode
 from sqlalchemy import exists
@@ -38,30 +38,24 @@ class BaseToken[DecodedType](ABC):
     token_type: TokenType
 
     @classmethod
-    async def _create_token_in_db(
-        cls, conn: AsyncSession, expires_at: datetime
-    ) -> Token:
-        new_token = Token(expires_at=expires_at)
-        conn.add(new_token)
-        await conn.flush()
-        await conn.refresh(new_token)
-        return new_token
-
-    @classmethod
     async def new(
-        cls, conn: AsyncSession, sub: str | UUID, data: dict | None = None
+        cls,
+        sub: str | UUID,
+        data: dict | None = None,
+        jti: str | None = None,
+        now: datetime | None = None,
+        expires_at: datetime | None = None,
     ) -> str:
         if isinstance(sub, UUID):
             sub = str(sub)
-        now = datetime.now(UTC)
-        expires_at = datetime.now(UTC) + cls.token_type.lifetime
-        token_in_db = await cls._create_token_in_db(conn=conn, expires_at=expires_at)
+        now = now or datetime.now(UTC)
+        expires_at = expires_at or datetime.now(UTC) + cls.token_type.lifetime
         return encode(
             payload={
                 "data": data,
                 "exp": expires_at,
                 "iat": now,
-                "jti": token_in_db.jti,
+                "jti": jti or str(uuid4()),
                 "sub": sub,
                 "type": cls.token_type,
             },
@@ -70,15 +64,7 @@ class BaseToken[DecodedType](ABC):
         )
 
     @classmethod
-    async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
-        token_exists = await conn.scalar(
-            exists(Token.__table__).where(Token.jti == jti).select()
-        )
-        if not token_exists:
-            raise InvalidTokenError
-
-    @classmethod
-    async def decode(cls, conn: AsyncSession, token: str) -> DecodedType:
+    async def decode(cls, token: str) -> DecodedType:
         # Actual decoding
         try:
             claims: dict = decode(
@@ -91,13 +77,6 @@ class BaseToken[DecodedType](ABC):
         if claims.get("type") != cls.token_type.value:
             raise InvalidTokenError
 
-        # Ensuring the token is in the database
-        if claims.get("jti"):
-            jti = claims["jti"]
-            await cls._ensure_token_in_db(conn=conn, jti=jti)
-        else:
-            raise InvalidTokenError
-
         # # Attempting to convert sub to UUID
         # try:
         #     claims["sub"] = UUID(claims["sub"])
@@ -106,18 +85,65 @@ class BaseToken[DecodedType](ABC):
         return claims
 
 
+# noinspection PyMethodOverriding
+class RevocableToken[DecodedType](BaseToken[DecodedType]):
+    @classmethod
+    async def _create_token_in_db(
+        cls, conn: AsyncSession, expires_at: datetime
+    ) -> Token:
+        new_token = Token(expires_at=expires_at)
+        conn.add(new_token)
+        await conn.flush()
+        await conn.refresh(new_token)
+        return new_token
+
+    @classmethod
+    async def new(
+        cls,
+        conn: AsyncSession,
+        sub: str | UUID,
+        data: dict | None = None,
+        jti: str | None = None,
+    ) -> str:
+        now = datetime.now(UTC)
+        expires_at = now + cls.token_type.lifetime
+        token_in_db = await cls._create_token_in_db(conn=conn, expires_at=expires_at)
+        return await super().new(
+            sub=sub, data=data, jti=str(token_in_db.jti), now=now, expires_at=expires_at
+        )
+
+    @classmethod
+    async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
+        token_exists = await conn.scalar(
+            exists(Token.__table__).where(Token.jti == jti).select()
+        )
+        if not token_exists:
+            raise InvalidTokenError
+
+    @classmethod
+    async def decode(cls, conn: AsyncSession, token: str) -> dict:
+        claims = await super().decode(token=token)
+        # Ensuring the token is in the database
+        if claims.get("jti"):
+            jti = claims["jti"]
+            await cls._ensure_token_in_db(conn=conn, jti=jti)
+        else:
+            raise InvalidTokenError
+        return claims
+
+
 class AccessToken(BaseToken[UserOutModel]):
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
     @classmethod
-    async def new(cls, conn: AsyncSession, user: UserOutModel) -> str:
+    async def new(cls, user: UserOutModel) -> str:
         user_id = user.user_id
-        return await super().new(conn=conn, sub=user_id, data=user.model_dump())
+        return await super().new(sub=user_id, data=user.model_dump())
 
     @classmethod
-    async def decode(cls, conn: AsyncSession, token: str) -> UserOutModel:
-        claims = await super().decode(conn=conn, token=token)
+    async def decode(cls, token: str) -> UserOutModel:
+        claims = await super().decode(token=token)
         data = claims["data"]
         data["user_id"] = claims["sub"]
         data["type"] = UserType(data["type"])
@@ -130,7 +156,7 @@ class AccessToken(BaseToken[UserOutModel]):
                 return UserOutModel.model_validate(data)
 
 
-class PasswordResetToken(BaseToken):
+class PasswordResetToken[str](RevocableToken):
     token_type = TokenType.PASSWORD_RESET
 
     # noinspection PyMethodOverriding
