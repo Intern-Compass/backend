@@ -276,6 +276,7 @@ class AuthService:
             updated_user.email,
             context=UpdatedUserContext(values_updated=list(values_to_update.keys())),
         )
+        await PasswordResetToken.revoke(conn=self.session, token=token)
         return {
             "detail": "Your password has been reset successfully, please proceed to log in"
         }
