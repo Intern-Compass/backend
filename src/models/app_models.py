@@ -441,3 +441,12 @@ class Todo(Base):
     )
 
     intern: Mapped[Intern] = relationship("Intern", back_populates="todos")
+
+
+class Token(Base):
+    __tablename__ = "token"
+
+    jti: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
