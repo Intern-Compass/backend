@@ -13,7 +13,10 @@ from ..schemas.task_schemas import TaskOutModel
 from ..schemas.todo_schemas import TodoInModel, TodoOutModel
 from ..services.intern_service import InternService
 from ..services.todo_service import TodoService
+from ..services.task_service import TaskService
 from ..utils import get_intern_user
+
+from typing import List
 
 
 router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
@@ -76,3 +79,18 @@ async def complete_intern_todo(
     return await todo_service.complete_todo(
         todo_id=todo_id, intern_id=UUID(intern.intern_id)
     )
+
+@router.patch("/submit-task", tags=["Task"])
+async def submit_task(
+    user: Annotated[InternOutModel, Depends(get_intern_user)],
+    task_service: Annotated[TaskService, Depends()],
+    task_id: str
+):
+    return await task_service.submit_task(tas_id=task_id, user_id=user.intern_id)
+
+@router.get("/all-tasks", tags=["Tasks"])
+async def get_all_tasks(
+    user: Annotated[InternOutModel, Depends(get_intern_user)],
+    task_service: Annotated[TaskService, Depends()]
+) -> List[TaskOutModel]:    
+    return await task_service.get_all_tasks_by_intern_id(intern_id=user.intern_id)
