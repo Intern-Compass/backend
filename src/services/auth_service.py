@@ -273,3 +273,26 @@ class AuthService:
         return {
             "detail": "Your password has been reset successfully, please proceed to log in"
         }
+
+    async def refresh_token(self, token: str):
+        try:
+            user_id: str = await RefreshToken.decode(self.session, token)
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+        user = await self.user_repo.get_user_by_id(
+            conn=self.session, user_id=UUID(user_id)
+        )
+        if not user:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+
+        access_token: str = await self._new_access_token_from_user(user)
+
+        return {
+            "access_token": access_token,
+            "user_type": user.type,
+            "token_type": "Bearer",
+        }
