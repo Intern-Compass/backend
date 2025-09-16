@@ -133,6 +133,7 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
             raise InvalidTokenError
         return claims
 
+    @classmethod
     async def revoke(self, conn: AsyncSession, jti: str) -> None:
         stmt = delete(Token.__table__).where(Token.jti == jti)
         await conn.execute(stmt)
