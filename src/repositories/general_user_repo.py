@@ -14,6 +14,19 @@ class UserRepository:
     def __init__(self):
         self.table = User
 
+    async def get_user_by_id(self, conn: AsyncSession, user_id: str):
+        stmt: Select = (
+            select(self.table)
+            .where(self.table.id == user_id)
+            .options(
+                selectinload(User.verification_code),
+                selectinload(User.intern),
+                selectinload(User.supervisor),
+            )
+        )
+        result: Result = await conn.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_user_by_email_or_phone(
         self,
         conn: AsyncSession,
