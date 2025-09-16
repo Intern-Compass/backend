@@ -1,18 +1,15 @@
 from typing import Annotated
-from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
 from starlette.responses import Response
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 from ..schemas.intern_schemas import InternInModel
 from ..schemas.supervisor_schemas import SupervisorInModel
 from ..schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
 from ..services import AuthService
-from ..infra.token import PasswordResetToken, InvalidTokenError
 from ..utils import limiter
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
@@ -74,11 +71,16 @@ async def reset_password(
     details: ResetPasswordRequest,
     auth_service: Annotated[AuthService, Depends()],
 ):
-    try:
-        user_id: str = PasswordResetToken.decode(details.token)
-    except InvalidTokenError:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
     return await auth_service.reset_password(
-        user_id=UUID(user_id), new_password=details.password
+        token=details.token, new_password=details.password
     )
+
+
+@router.post("/refresh")
+@limiter.limit("5/minute")
+async def refresh_token(
+    request: Request,
+    token: Annotated[str, Body()],
+    auth_service: Annotated[AuthService, Depends()],
+):
+    return await auth_service.refresh_token(token=token)

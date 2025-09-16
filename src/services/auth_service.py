@@ -14,7 +14,12 @@ from starlette.status import (
 )
 
 from ..common import UserType
-from ..infra.token import PasswordResetToken, AccessToken
+from ..infra.token import (
+    PasswordResetToken,
+    AccessToken,
+    RefreshToken,
+    InvalidTokenError,
+)
 from ..db import get_db_session
 from ..models.app_models import User, VerificationCode
 from ..repositories.general_user_repo import UserRepository
@@ -62,6 +67,18 @@ class AuthService:
         self.code_repo = code_repo
         self.skill_repo = skill_repo
         self.background_task = background_task
+
+    @staticmethod
+    async def _new_access_token_from_user(user: User) -> str:
+        match user.type:
+            case UserType.SUPERVISOR:
+                user_to_login = SupervisorOutModel.from_supervisor(user)
+            case UserType.INTERN:
+                user_to_login = InternOutModel.from_intern(user)
+            case _:
+                user_to_login = UserOutModel.from_user(user)
+
+        return await AccessToken.new(user=user_to_login)
 
     async def create_unverified_new_user(
         self, new_user: UserInModel | InternInModel | SupervisorInModel
@@ -148,16 +165,17 @@ class AuthService:
 
             await self.code_repo.delete_code(conn=self.session, value=code)
 
-            if verified_user.type == UserType.SUPERVISOR:
-                user_to_login = SupervisorOutModel.from_supervisor(verified_user)
-                logger.info(f"Supervisor user {verified_user.email} has been verified")
-            elif verified_user.type == UserType.INTERN:
-                user_to_login = InternOutModel.from_intern(verified_user)
-                logger.info(f"Intern user {verified_user.email} has been verified")
-            else:
-                user_to_login = UserOutModel.from_user(verified_user)
+            match verified_user.type:
+                case UserType.SUPERVISOR:
+                    logger.info(
+                        f"Supervisor user {verified_user.email} has been verified"
+                    )
+                case UserType.INTERN:
+                    logger.info(f"Intern user {verified_user.email} has been verified")
+                case _:
+                    logger.info(f"User {verified_user.email} has been verified")
 
-            access_token: str = AccessToken.new(user=user_to_login)
+            access_token: str = await self._new_access_token_from_user(verified_user)
 
         # Send confirmation mail once user has been created.
         user_normalized_email: str = normalize_string(verified_user.email)
@@ -166,7 +184,11 @@ class AuthService:
             user_normalized_email,
             context=EmailVerifiedContext(),
         )
-        return {"access_token": access_token, "user_type": user_to_login.type, "token_type": "Bearer"}
+        return {
+            "access_token": access_token,
+            "user_type": verified_user.type,
+            "token_type": "Bearer",
+        }
 
     async def login(self, username: str, password: str):
         existing_user: User = await self.user_repo.get_user_by_email_or_phone(
@@ -187,20 +209,11 @@ class AuthService:
                 status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
             )
 
-        if existing_user.type == UserType.SUPERVISOR:
-            user_to_login: UserOutModel = SupervisorOutModel.from_supervisor(
-                existing_user
-            )
-        elif existing_user.type == UserType.INTERN:
-            user_to_login: UserOutModel = InternOutModel.from_intern(existing_user)
-        else:
-            user_to_login: UserOutModel = UserOutModel.from_user(existing_user)
-
-        access_token: str = AccessToken.new(user=user_to_login)
+        access_token: str = await self._new_access_token_from_user(existing_user)
 
         return {
             "access_token": access_token,
-            "user_type": user_to_login.type,
+            "user_type": existing_user.type,
             "token_type": "Bearer",
         }
 
@@ -243,12 +256,18 @@ class AuthService:
         }
         return response
 
-    async def reset_password(self, user_id: UUID, new_password: str):
+    async def reset_password(self, token: str, new_password: str):
+        try:
+            user_id: str = await PasswordResetToken.decode(self.session, token)
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
         new_password: str = hash_password(new_password)
         values_to_update: dict = {"password": new_password}
         updated_user: User = await self.user_repo.update(
             conn=self.session,
-            user_id=user_id,
+            user_id=UUID(user_id),
             values=values_to_update,
         )
 
@@ -257,6 +276,30 @@ class AuthService:
             updated_user.email,
             context=UpdatedUserContext(values_updated=list(values_to_update.keys())),
         )
+        await PasswordResetToken.revoke(conn=self.session, token=token)
         return {
             "detail": "Your password has been reset successfully, please proceed to log in"
+        }
+
+    async def refresh_token(self, token: str):
+        try:
+            user_id: str = await RefreshToken.decode(self.session, token)
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+        user = await self.user_repo.get_user_by_id(
+            conn=self.session, user_id=UUID(user_id)
+        )
+        if not user:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+
+        access_token: str = await self._new_access_token_from_user(user)
+
+        return {
+            "access_token": access_token,
+            "user_type": user.type,
+            "token_type": "Bearer",
         }
