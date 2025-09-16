@@ -133,6 +133,12 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
 
 
 class AccessToken(BaseToken[UserOutModel]):
+    """
+    Access token factory class.
+
+    Decoding returns a UserOutModel.
+    """
+
     token_type = TokenType.ACCESS
 
     # noinspection PyMethodOverriding
@@ -157,6 +163,12 @@ class AccessToken(BaseToken[UserOutModel]):
 
 
 class PasswordResetToken[str](RevocableToken):
+    """
+    Password reset token factory class.
+
+    Decoding returns the user_id
+    """
+
     token_type = TokenType.PASSWORD_RESET
 
     # noinspection PyMethodOverriding
