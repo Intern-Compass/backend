@@ -4,7 +4,7 @@ from enum import StrEnum
 from uuid import UUID, uuid4
 
 from jwt import PyJWTError, decode, encode
-from sqlalchemy import exists
+from sqlalchemy import exists, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common import UserType
@@ -132,6 +132,11 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
         else:
             raise InvalidTokenError
         return claims
+
+    async def revoke(self, conn: AsyncSession, jti: str) -> None:
+        stmt = delete(Token.__table__).where(Token.jti == jti)
+        await conn.execute(stmt)
+        await conn.commit()
 
 
 class AccessToken(BaseToken[UserOutModel]):
