@@ -22,6 +22,7 @@ class InvalidTokenError(Exception):
 class TokenType(StrEnum):
     ACCESS = "access"
     PASSWORD_RESET = "password_reset"
+    REFRESH = "refresh"
 
     @property
     def lifetime(self) -> timedelta:
@@ -31,6 +32,7 @@ class TokenType(StrEnum):
 TOKEN_LIFETIMES: dict[TokenType, timedelta] = {
     TokenType.ACCESS: timedelta(minutes=60),
     TokenType.PASSWORD_RESET: timedelta(minutes=10),
+    TokenType.REFRESH: timedelta(days=30),
 }
 
 
@@ -162,7 +164,28 @@ class AccessToken(BaseToken[UserOutModel]):
                 return UserOutModel.model_validate(data)
 
 
-class PasswordResetToken[str](RevocableToken):
+class RefreshToken[str](RevocableToken[str]):
+    """
+    Refresh token factory class.
+
+    Decoding returns the user_id
+    """
+
+    token_type = TokenType.REFRESH
+
+    # noinspection PyMethodOverriding
+    @classmethod
+    async def new(cls, conn: AsyncSession, user_id: UUID) -> str:
+        return await super().new(conn=conn, sub=user_id)
+
+    @classmethod
+    async def decode(cls, conn: AsyncSession, token: str) -> str:
+        claims = await super().decode(conn=conn, token=token)
+        user_id = claims["sub"]
+        return user_id
+
+
+class PasswordResetToken[str](RevocableToken[str]):
     """
     Password reset token factory class.
 
