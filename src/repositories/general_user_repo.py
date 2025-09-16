@@ -14,7 +14,7 @@ class UserRepository:
     def __init__(self):
         self.table = User
 
-    async def get_user_by_id(self, conn: AsyncSession, user_id: str):
+    async def get_user_by_id(self, conn: AsyncSession, user_id: UUID):
         stmt: Select = (
             select(self.table)
             .where(self.table.id == user_id)
