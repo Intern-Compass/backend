@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
@@ -82,3 +82,13 @@ async def reset_password(
     return await auth_service.reset_password(
         user_id=UUID(user_id), new_password=details.password
     )
+
+
+@router.post("/refresh")
+@limiter.limit("5/minute")
+async def refresh_token(
+    request: Request,
+    token: Annotated[str, Body()],
+    auth_service: Annotated[AuthService, Depends()],
+):
+    return await auth_service.refresh_token(token=token)
