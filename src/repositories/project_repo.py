@@ -10,12 +10,12 @@ from ..schemas.project_schemas import ProjectInModel
 class ProjectRepository:
     def __init__(self):
         self.table = Project
-
-    async def create_new_project(self, new_project: ProjectInModel, conn: AsyncSession):
+    
+    async def create_new_project(self, user_id: str, new_project: ProjectInModel, conn: AsyncSession):
         project: Project = self.table(
             title=new_project.title,
             description=new_project.description,
-            supervisor_id=uuid.UUID(new_project.supervisor_id),
+            supervisor_id=uuid.UUID(user_id),
             division_id=uuid.UUID(new_project.division_id),
         )
         conn.add(project)

@@ -11,9 +11,9 @@ class TaskRepository:
     def __init__(self):
         self.table = Task
 
-    async def create_new_task(self, new_task: TaskInModel, conn: AsyncSession):
+    async def create_new_task(self, project_id: str, new_task: TaskInModel, conn: AsyncSession):
         task: Task = Task(
-            project_id=uuid.UUID(new_task.project_id),
+            project_id=uuid.UUID(project_id),
             title=new_task.title,
             description=new_task.description,
             due_date=new_task.due_date,
