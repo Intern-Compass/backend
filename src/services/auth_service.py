@@ -256,12 +256,18 @@ class AuthService:
         }
         return response
 
-    async def reset_password(self, user_id: UUID, new_password: str):
+    async def reset_password(self, token: str, new_password: str):
+        try:
+            user_id: str = await PasswordResetToken.decode(self.session, token)
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
         new_password: str = hash_password(new_password)
         values_to_update: dict = {"password": new_password}
         updated_user: User = await self.user_repo.update(
             conn=self.session,
-            user_id=user_id,
+            user_id=UUID(user_id),
             values=values_to_update,
         )
 
