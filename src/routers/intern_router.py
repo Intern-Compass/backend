@@ -7,6 +7,7 @@ from pydantic import UUID4
 from fastapi import APIRouter
 from fastapi.params import Depends
 
+from ..schemas import UserOutModel
 from ..schemas.intern_schemas import InternOutModel, BasicUserDetails
 from ..schemas.project_schemas import ProjectOutModel
 from ..schemas.task_schemas import TaskOutModel
@@ -14,7 +15,7 @@ from ..schemas.todo_schemas import TodoInModel, TodoOutModel
 from ..services.intern_service import InternService
 from ..services.todo_service import TodoService
 from ..services.task_service import TaskService
-from ..utils import get_intern_user
+from ..utils import get_intern_user, get_current_user
 
 from typing import List
 
@@ -41,15 +42,15 @@ async def get_intern_tasks(
     return await intern_service.get_intern_tasks(user_id=uuid.UUID(user.user_id))
 
 
-@router.get("/projects", tags=["Projects", "Dashboard"])
-async def get_projects(
+@router.get("/projects", tags=["Project", "Dashboard"])
+async def get_projects_assigned_to_by_supervisor(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     intern_service: Annotated[InternService, Depends()],
 ) -> list[ProjectOutModel]:
     return await intern_service.get_intern_projects(intern_id=uuid.UUID(user.intern_id))
 
 
-@router.get("/todos", tags=["Todos", "Dashboard"])
+@router.get("/todos", tags=["Todo", "Dashboard"])
 async def get_intern_todos(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     todo_service: Annotated[TodoService, Depends()],
@@ -59,7 +60,7 @@ async def get_intern_todos(
     return todos
 
 
-@router.post("/todos", tags=["Todos", "Dashboard"])
+@router.post("/todos", tags=["Todo", "Dashboard"])
 async def create_intern_todo(
     todo_data: TodoInModel,
     user: Annotated[InternOutModel, Depends(get_intern_user)],
@@ -70,7 +71,7 @@ async def create_intern_todo(
     )
 
 
-@router.patch("/todos/{todo_id}/complete", tags=["Todos", "Dashboard"])
+@router.patch("/todos/{todo_id}/complete", tags=["Todo", "Dashboard"])
 async def complete_intern_todo(
     todo_id: UUID4,
     todo_service: Annotated[TodoService, Depends()],
@@ -80,17 +81,19 @@ async def complete_intern_todo(
         todo_id=todo_id, intern_id=UUID(intern.intern_id)
     )
 
-# @router.patch("/submit-task", tags=["Task"])
-# async def submit_task(
-#     user: Annotated[InternOutModel, Depends(get_intern_user)],
-#     task_service: Annotated[TaskService, Depends()],
-#     task_id: str
-# ):
-#     return await task_service.submit_task(tas_id=task_id, user_id=user.intern_id)
-
-@router.get("/all-tasks", tags=["Tasks"])
+@router.get("/all-tasks", tags=["Task"])
 async def get_all_tasks(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
     task_service: Annotated[TaskService, Depends()]
 ) -> List[TaskOutModel]:    
     return await task_service.get_all_tasks_by_intern_id(intern_id=user.intern_id)
+
+@router.get("/tasks")
+async def get_tasks_by_project_id(
+        project_id: str,
+        user: Annotated[UserOutModel, Depends(get_current_user)],
+        task_service: Annotated[TaskService, Depends()]
+):
+    return await task_service.get_all_tasks_by_project_id(
+        project_id=UUID(project_id)
+    )

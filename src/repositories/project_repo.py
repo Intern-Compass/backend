@@ -1,6 +1,7 @@
 from uuid import UUID
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..models.app_models import Project, InternTask, Task
 from ..schemas.project_schemas import ProjectInModel
@@ -23,7 +24,7 @@ class ProjectRepository:
         return project
 
     async def get_project_by_id(self, conn: AsyncSession, project_id: UUID):
-        stmt = select(self.table).where(self.table.id == project_id)
+        stmt = select(self.table).where(self.table.id == project_id).options(selectinload(Project.tasks))
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -46,10 +47,10 @@ class ProjectRepository:
         return result.scalars().all()
 
     async def get_all_projects_by_supervisor_id(
-        self, conn: AsyncSession, supervisor_id: str
+        self, conn: AsyncSession, supervisor_id: UUID
     ):
         stmt = select(self.table).where(
-            self.table.supervisor_id == UUID(supervisor_id)
+            self.table.supervisor_id == supervisor_id
         )
         result = await conn.execute(stmt)
         return result.scalars().all()

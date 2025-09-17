@@ -73,13 +73,33 @@ class ProjectService:
                 )
             # Create new task
             task: Task = await self.task_repo.create_new_task(
-                project_id=project.id, new_task=task_data, conn=self.session
+                project_id=project.id,
+                new_task=task_data,
+                conn=self.session,
+                supervisor_id=supervisor_id
             )
             
-            #add task to project
-            project.tasks.append(task)
-            
             return TaskOutModel.from_model(task=task)
+
+    async def get_tasks_by_project_id(self, project_id: UUID, supervisor_id: UUID) -> list[TaskOutModel]:
+        async with self.session.begin():
+            project: Project = await self.project_repo.get_project_by_id(
+                conn=self.session, project_id=project_id,
+            )
+            if project.supervisor_id != supervisor_id:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN, detail="Supervisor not authorized to view this project"
+                )
+
+            return [TaskOutModel.from_model(task) for task in project.tasks]
+
+    async def get_all_projects_created_by_supervisor(self, supervisor_id: UUID):
+        async with self.session.begin():
+            projects: list[Project] = await self.project_repo.get_all_projects_by_supervisor_id(
+                conn=self.session, supervisor_id=supervisor_id
+            )
+
+            return [ProjectOutModel.from_model(project) for project in projects]
 
 
 

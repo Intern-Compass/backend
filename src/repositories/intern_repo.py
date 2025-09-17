@@ -51,6 +51,7 @@ class InternRepository:
                 selectinload(Intern.user),
                 selectinload(Intern.user).selectinload(User.skills),
                 selectinload(Intern.user).selectinload(User.department),
+                selectinload(Intern.tasks)
             )
         )
         result: Result = await conn.execute(stmt)

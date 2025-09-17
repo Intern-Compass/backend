@@ -7,7 +7,6 @@ from ..models.app_models import Project
 class ProjectInModel(BaseModel):
     title: str
     description: str
-    supervisor_id: str
 
 
 class ProjectOutModel(BaseModel):

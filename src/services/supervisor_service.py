@@ -27,48 +27,13 @@ class SupervisorService:
         self.intern_repo = intern_repo
 
     async def get_interns(self, supervisor_id: UUID):
-        # TODO: IMPORTANT Fix the loading of relationships
         async with self.session.begin():
             interns: list[Intern] = await self.intern_repo.get_interns_for_supervisor(
                 conn=self.session, supervisor_id=supervisor_id
             )
 
-        return [InternOutModel.from_user(intern.user) for intern in interns]
+        return [InternOutModel.from_model(intern) for intern in interns]
 
-    async def assign_intern_to_supervisor(self, supervisor_id: str, intern_id: str):
-        async with self.session.begin():
-            existing_intern: Intern | None = await self.intern_repo.get_intern_by_id(
-                conn=self.session, intern_id=intern_id
-            )
-
-            if not existing_intern:
-                raise HTTPException(
-                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
-                )
-
-            if existing_intern.supervisor_id:
-                raise HTTPException(
-                    status_code=HTTP_404_NOT_FOUND,
-                    detail="Intern already assigned to supervisor",
-                )
-
-            await self.supervisor_repo.assign_interns_to_supervisor(
-                conn=self.session,
-                supervisor_id=supervisor_id,
-                interns_to_assign=[existing_intern],
-            )
-
-        print(
-            {"detail": f"{existing_intern.user.email} has been assigned a supervisor"}
-        )
-
-    async def get_supervisor(self, supervisor_id: str):
-        async with self.session.begin():
-            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
-                conn=self.session, supervisor_id=supervisor_id
-            )
-
-        return supervisor
 
     async def get_supervisors(self):
         async with self.session.begin():

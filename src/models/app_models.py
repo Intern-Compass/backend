@@ -62,15 +62,15 @@ class User(Base):
     )
     work_location: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now()
+        DateTime(timezone=True), default=lambda: datetime.now(tz=ZoneInfo("UTC"))
     )
 
     type: Mapped[UserType] = mapped_column(user_type_enum)
     verified: Mapped[bool] = mapped_column(default=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(),
-        onupdate=lambda: datetime.now(),
+        DateTime(timezone=True),
+        default=lambda: datetime.now(tz=ZoneInfo("UTC")),
+        onupdate=lambda: datetime.now(tz=ZoneInfo("UTC")),
     )
 
     # relationships
@@ -163,7 +163,7 @@ class InternTask(Base):
         primary_key=True,
     )
     assigned_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
+        DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
 
     __table_args__ = (
@@ -257,7 +257,7 @@ class Project(Base):
         ForeignKey("department.id", onupdate="CASCADE", ondelete="CASCADE"),
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
+        DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
 
     # relationships
@@ -293,7 +293,7 @@ class ProjectIntern(Base):
         primary_key=True,
     )
     assigned_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
+        DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
 
     __table_args__ = (
@@ -340,10 +340,10 @@ class Task(Base):
     is_submitted: Mapped[bool] = mapped_column(Boolean, default=False)
     due_date: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
+        DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
-    completed_at: Mapped[datetime] = mapped_column(DateTime)
-    submitted_at: Mapped[datetime] = mapped_column(DateTime)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
     supervisor: Mapped[Supervisor] = relationship("Supervisor", back_populates="tasks")
@@ -388,7 +388,7 @@ class Note(Base):
     )
     content: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
+        DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
 
     intern: Mapped[Intern] = relationship("Intern", back_populates="notes")
@@ -435,13 +435,13 @@ class Todo(Base):
     done: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now()
+        DateTime(timezone=True), default=lambda: datetime.now(tz=ZoneInfo("UTC"))
     )
 
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(),
-        onupdate=lambda: datetime.now(),
+        DateTime(timezone=True),
+        default=lambda: datetime.now(tz=ZoneInfo("UTC")),
+        onupdate=lambda: datetime.now(tz=ZoneInfo("UTC")),
     )
 
     intern: Mapped[Intern] = relationship("Intern", back_populates="todos")
