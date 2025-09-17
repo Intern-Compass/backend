@@ -55,7 +55,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     normalized_email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
-    date_of_birth: Mapped[datetime] = mapped_column(Date)
+    date_of_birth: Mapped[date] = mapped_column(Date)
     department_id: Mapped[int] = mapped_column(
         ForeignKey("department.id", onupdate="CASCADE", ondelete="SET NULL"),
         nullable=False,

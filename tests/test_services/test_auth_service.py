@@ -1,15 +1,15 @@
 """Test for Auth Service"""
 
-from uuid import uuid4
-import pytest
 from unittest.mock import AsyncMock, patch, ANY
+from uuid import uuid4
+
+import pytest
 from fastapi import HTTPException
 
 from src.common import UserType
 from src.schemas.intern_schemas import InternOutModel
 from src.schemas.supervisor_schemas import SupervisorOutModel
 from src.services.auth_service import AuthService
-from src.utils import TokenType
 from tests.utils.utils import (
     create_mock_user,
     create_mock_intern,

@@ -1,8 +1,9 @@
-from typing import Optional, Sequence
+from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import select, update, Result
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.models.app_models import Intern, Todo
 from src.schemas.todo_schemas import TodoInModel, TodoUpdateModel
 

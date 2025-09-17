@@ -1,9 +1,9 @@
 import re
-from datetime import datetime
+from datetime import datetime, date
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, validator, field_validator
+from pydantic import BaseModel, EmailStr, field_validator
 
 from src.common import DepartmentEnum, UserType
 from src.models import User
@@ -20,7 +20,7 @@ class UserInModel(BaseModel):
     email: Annotated[str, EmailStr]
     password: str
     skills: list[SkillCreate]
-    date_of_birth: datetime
+    date_of_birth: date
     department: DepartmentEnum
     work_location: str
 

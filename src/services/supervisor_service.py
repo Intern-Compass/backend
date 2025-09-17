@@ -1,10 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_404_NOT_FOUND
 
 from ..db import get_db_session
 from ..models.app_models import Intern, Supervisor
