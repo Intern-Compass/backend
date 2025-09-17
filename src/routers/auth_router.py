@@ -52,7 +52,9 @@ async def login(
     response: Response,
 ):
     """Logs the intern in and returns access and refresh tokens"""
-    return await auth_service.login(username=form.username, password=form.password, response=response)
+    return await auth_service.login(
+        username=form.username, password=form.password, response=response
+    )
 
 
 @router.post("/forgot-password")

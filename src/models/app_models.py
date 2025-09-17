@@ -342,9 +342,13 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(ZoneInfo("UTC"))
     )
-    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
-    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
     supervisor: Mapped[Supervisor] = relationship("Supervisor", back_populates="tasks")
     interns: Mapped[List[Intern]] = relationship(

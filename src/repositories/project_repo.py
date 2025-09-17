@@ -10,8 +10,14 @@ from ..schemas.project_schemas import ProjectInModel
 class ProjectRepository:
     def __init__(self):
         self.table = Project
-    
-    async def create_new_project(self, supervisor_id: UUID, department_id: int, new_project: ProjectInModel, conn: AsyncSession):
+
+    async def create_new_project(
+        self,
+        supervisor_id: UUID,
+        department_id: int,
+        new_project: ProjectInModel,
+        conn: AsyncSession,
+    ):
         project: Project = self.table(
             title=new_project.title,
             description=new_project.description,
@@ -24,7 +30,11 @@ class ProjectRepository:
         return project
 
     async def get_project_by_id(self, conn: AsyncSession, project_id: UUID):
-        stmt = select(self.table).where(self.table.id == project_id).options(selectinload(Project.tasks))
+        stmt = (
+            select(self.table)
+            .where(self.table.id == project_id)
+            .options(selectinload(Project.tasks))
+        )
         result = await conn.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -33,9 +43,7 @@ class ProjectRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_projects_by_intern_id(
-        self, conn: AsyncSession, intern_id: UUID
-    ):
+    async def get_all_projects_by_intern_id(self, conn: AsyncSession, intern_id: UUID):
         stmt = (
             select(self.table)
             .join(Task, self.table.id == Task.project_id)
@@ -49,9 +57,7 @@ class ProjectRepository:
     async def get_all_projects_by_supervisor_id(
         self, conn: AsyncSession, supervisor_id: UUID
     ):
-        stmt = select(self.table).where(
-            self.table.supervisor_id == supervisor_id
-        )
+        stmt = select(self.table).where(self.table.supervisor_id == supervisor_id)
         result = await conn.execute(stmt)
         return result.scalars().all()
 

@@ -33,7 +33,9 @@ class TodoService:
                 conn=self.session, user_id=user_id
             )
             if not intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
 
             todos: Sequence[Todo] = await self.todo_repo.get_todos_by_intern_id(
                 conn=self.session,
@@ -57,7 +59,9 @@ class TodoService:
         async with self.session.begin():
             intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
             if not intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
             todo: Todo = await self.todo_repo.create_todo(
                 conn=self.session, intern_id=intern.id, todo_data=todo_data
             )
@@ -77,7 +81,9 @@ class TodoService:
                 conn=self.session, todo_id=todo_id
             )
             if not existing_todo:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Todo not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Todo not found"
+                )
             if existing_todo.intern_id != intern_id:
                 raise HTTPException(
                     status_code=403, detail="This is not your Todo to update."

@@ -24,7 +24,10 @@ app.add_middleware(SlowAPIMiddleware)
 
 @app.exception_handler(RateLimitExceeded)
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(status_code=HTTP_429_TOO_MANY_REQUESTS, content={"detail": "Rate limit exceeded"})
+    return JSONResponse(
+        status_code=HTTP_429_TOO_MANY_REQUESTS,
+        content={"detail": "Rate limit exceeded"},
+    )
 
 
 ORIGINS = ["*"]

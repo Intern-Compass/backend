@@ -70,7 +70,9 @@ class InternService:
         async with self.session.begin():
             intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
             if not intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
             return await self.task_repo.get_all_tasks_by_intern_id(
                 self.session, intern.id
             )

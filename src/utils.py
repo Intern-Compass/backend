@@ -91,8 +91,9 @@ def normalize_string(string: str) -> str:
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["100/hour"],
-    enabled=settings.RATE_LIMIT_ENABLED
+    enabled=settings.RATE_LIMIT_ENABLED,
 )
+
 
 def set_custom_cookie(
     response: Response,

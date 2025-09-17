@@ -116,9 +116,7 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
 
     @classmethod
     async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
-        token_exists = await conn.scalar(
-            exists(Token).where(Token.jti == jti).select()
-        )
+        token_exists = await conn.scalar(exists(Token).where(Token.jti == jti).select())
         if not token_exists:
             raise InvalidTokenError
 

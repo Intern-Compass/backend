@@ -11,7 +11,13 @@ class TaskRepository:
     def __init__(self):
         self.table = Task
 
-    async def create_new_task(self, project_id: UUID, supervisor_id: UUID, new_task: TaskInModel, conn: AsyncSession):
+    async def create_new_task(
+        self,
+        project_id: UUID,
+        supervisor_id: UUID,
+        new_task: TaskInModel,
+        conn: AsyncSession,
+    ):
         task: Task = self.table(
             project_id=project_id,
             title=new_task.title,
@@ -34,9 +40,7 @@ class TaskRepository:
         result = await conn.execute(stmt)
         return result.scalars().all()
 
-    async def get_all_tasks_by_intern_id(
-        self, conn: AsyncSession, intern_id: UUID
-    ):
+    async def get_all_tasks_by_intern_id(self, conn: AsyncSession, intern_id: UUID):
         stmt = (
             select(self.table)
             .join(InternTask, self.table.id == InternTask.task_id)

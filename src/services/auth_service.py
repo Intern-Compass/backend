@@ -33,7 +33,8 @@ from ..utils import (
     generate_random_code,
     hash_password,
     normalize_string,
-    password_is_correct, set_custom_cookie,
+    password_is_correct,
+    set_custom_cookie,
 )
 
 from ..infra.email import send_email
@@ -177,13 +178,15 @@ class AuthService:
                     logger.info(f"User {verified_user.email} has been verified")
 
             access_token: str = await self._new_access_token_from_user(verified_user)
-            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=verified_user.id)
+            refresh_token: str = await RefreshToken.new(
+                conn=self.session, user_id=verified_user.id
+            )
 
         set_custom_cookie(
             response=response,
             key="refresh_token",
             value=refresh_token,
-            max_age=timedelta(days=30)
+            max_age=timedelta(days=30),
         )
         # Send confirmation mail once user has been created.
         self.background_task.add_task(
@@ -204,27 +207,32 @@ class AuthService:
             )
             if not existing_user:
                 raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail="Invalid login credentials",
                 )
 
             if not password_is_correct(existing_user.password, password):
                 raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail="Invalid login credentials",
                 )
 
             if not existing_user.verified:
                 raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                    status_code=HTTP_401_UNAUTHORIZED,
+                    detail="Invalid login credentials",
                 )
 
             access_token: str = await self._new_access_token_from_user(existing_user)
-            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=existing_user.id)
+            refresh_token: str = await RefreshToken.new(
+                conn=self.session, user_id=existing_user.id
+            )
 
         set_custom_cookie(
             response=response,
             key="refresh_token",
             value=refresh_token,
-            max_age=timedelta(days=30)
+            max_age=timedelta(days=30),
         )
         return {
             "access_token": access_token,
@@ -232,14 +240,15 @@ class AuthService:
             "token_type": "Bearer",
         }
 
-
     async def request_reset_password(self, email: str):
         async with self.session.begin():
             user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session, email=email
             )
             if not user:
-                logger.info(f"No user with email {email} exists to send verification code.")
+                logger.info(
+                    f"No user with email {email} exists to send verification code."
+                )
 
             if user:
                 token = PasswordResetToken.new(conn=self.session, user_id=user.id)
@@ -260,7 +269,9 @@ class AuthService:
     async def reset_password(self, token: str, new_password: str):
         async with self.session.begin():
             try:
-                user_id: str = await PasswordResetToken.decode(conn=self.session, token=token)
+                user_id: str = await PasswordResetToken.decode(
+                    conn=self.session, token=token
+                )
             except InvalidTokenError:
                 raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
@@ -304,13 +315,15 @@ class AuthService:
                 )
 
             access_token: str = await self._new_access_token_from_user(user)
-            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=UUID(user_id))
+            refresh_token: str = await RefreshToken.new(
+                conn=self.session, user_id=UUID(user_id)
+            )
 
         set_custom_cookie(
             response=response,
             key="refresh_token",
             value=refresh_token,
-            max_age=timedelta(days=30)
+            max_age=timedelta(days=30),
         )
         return {
             "access_token": access_token,

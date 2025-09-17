@@ -34,7 +34,6 @@ class SupervisorService:
 
         return [InternOutModel.from_model(intern) for intern in interns]
 
-
     async def get_supervisors(self):
         async with self.session.begin():
             supervisors: list[

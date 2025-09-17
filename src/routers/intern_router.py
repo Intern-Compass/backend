@@ -81,19 +81,19 @@ async def complete_intern_todo(
         todo_id=todo_id, intern_id=UUID(intern.intern_id)
     )
 
+
 @router.get("/all-tasks", tags=["Task"])
 async def get_all_tasks(
     user: Annotated[InternOutModel, Depends(get_intern_user)],
-    task_service: Annotated[TaskService, Depends()]
-) -> List[TaskOutModel]:    
+    task_service: Annotated[TaskService, Depends()],
+) -> List[TaskOutModel]:
     return await task_service.get_all_tasks_by_intern_id(intern_id=user.intern_id)
+
 
 @router.get("/tasks")
 async def get_tasks_by_project_id(
-        project_id: str,
-        user: Annotated[UserOutModel, Depends(get_current_user)],
-        task_service: Annotated[TaskService, Depends()]
+    project_id: str,
+    user: Annotated[UserOutModel, Depends(get_current_user)],
+    task_service: Annotated[TaskService, Depends()],
 ):
-    return await task_service.get_all_tasks_by_project_id(
-        project_id=UUID(project_id)
-    )
+    return await task_service.get_all_tasks_by_project_id(project_id=UUID(project_id))

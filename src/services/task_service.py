@@ -5,7 +5,12 @@ import datetime
 from fastapi import HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
+from starlette.status import (
+    HTTP_404_NOT_FOUND,
+    HTTP_403_FORBIDDEN,
+    HTTP_400_BAD_REQUEST,
+    HTTP_409_CONFLICT,
+)
 
 from ..db import get_db_session
 from ..models.app_models import Intern, Task
@@ -17,11 +22,11 @@ from ..schemas.task_schemas import TaskOutModel
 
 class TaskService:
     def __init__(
-        self, 
+        self,
         intern_repo: Annotated[InternRepository, Depends()],
         project_repo: Annotated[ProjectRepository, Depends()],
-        task_repo: Annotated[TaskRepository, Depends()],   
-        session: Annotated[AsyncSession, Depends(get_db_session)],             
+        task_repo: Annotated[TaskRepository, Depends()],
+        session: Annotated[AsyncSession, Depends(get_db_session)],
     ):
         self.intern_repo = intern_repo
         self.project_repo = project_repo
@@ -36,24 +41,37 @@ class TaskService:
 
             return [TaskOutModel.from_model(task=task) for task in tasks]
 
-    async def assign_task_to_intern(self, task_id: UUID, intern_id: UUID, supervisor_id: UUID) -> TaskOutModel:
+    async def assign_task_to_intern(
+        self, task_id: UUID, intern_id: UUID, supervisor_id: UUID
+    ) -> TaskOutModel:
         async with self.session.begin():
-            task: Task | None = await self.task_repo.get_task_by_id(conn=self.session, id_value=task_id)
+            task: Task | None = await self.task_repo.get_task_by_id(
+                conn=self.session, id_value=task_id
+            )
             if not task:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Task not found")
-            
-            intern: Intern | None = await self.intern_repo.get_intern_by_id(conn=self.session, intern_id=intern_id)
-            
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Task not found"
+                )
+
+            intern: Intern | None = await self.intern_repo.get_intern_by_id(
+                conn=self.session, intern_id=intern_id
+            )
+
             if not intern:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Intern not found"
+                )
 
             if task in intern.tasks:
-                raise HTTPException(status_code=HTTP_409_CONFLICT, detail="Intern already assigned to this task")
+                raise HTTPException(
+                    status_code=HTTP_409_CONFLICT,
+                    detail="Intern already assigned to this task",
+                )
 
             if intern.supervisor_id != supervisor_id:
                 raise HTTPException(
                     status_code=HTTP_403_FORBIDDEN,
-                    detail="Intern was not assigned to you. What are you doing?"
+                    detail="Intern was not assigned to you. What are you doing?",
                 )
             # assign task to intern
             intern.tasks.append(task)
@@ -64,83 +82,102 @@ class TaskService:
                 title=task.title,
                 description=task.description,
                 is_completed=task.is_completed,
-                is_submitted=task.is_submitted,  
+                is_submitted=task.is_submitted,
                 due_date=task.due_date,
                 created_at=task.created_at,
-            )        
-        
-   
-    async def mark_task_as_completed(self, task_id: str, supervisor_id: str) -> TaskOutModel:
-        async with self.session.begin():  
-            task: Task | None = await self.task_repo.get_task_by_id(self, conn=self.session, id_value=task_id)
-                                
-            if not task.project or str(task.project.supervisor_id) != str(supervisor_id):
+            )
+
+    async def mark_task_as_completed(
+        self, task_id: str, supervisor_id: str
+    ) -> TaskOutModel:
+        async with self.session.begin():
+            task: Task | None = await self.task_repo.get_task_by_id(
+                self, conn=self.session, id_value=task_id
+            )
+
+            if not task.project or str(task.project.supervisor_id) != str(
+                supervisor_id
+            ):
                 raise HTTPException(
                     status_code=HTTP_403_FORBIDDEN,
-                    detail="Supervisor not authorized to mark this task as completed"
+                    detail="Supervisor not authorized to mark this task as completed",
                 )
-            
+
             if not task:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Task not found")
-            
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Task not found"
+                )
+
             if task.is_completed:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Task is already completed")
-            
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Task is already completed"
+                )
+
             task.is_completed = True
-            task.completed_at = datetime.utcnow()            
-            
-            updated_task = await self.task_repo.update_task(task)         
-           
+            task.completed_at = datetime.utcnow()
+
+            updated_task = await self.task_repo.update_task(task)
+
             return TaskOutModel(
                 id=str(updated_task.id),
                 project_id=str(updated_task.project_id),
                 description=task.description,
                 is_completed=task.is_completed,
-                is_submitted=task.is_submitted,                
+                is_submitted=task.is_submitted,
                 due_date=task.due_date,
                 created_at=task.created_at,
-            )  
-            
-            
+            )
+
     async def submit_task(self, task_id: str, user_id: str) -> TaskOutModel:
         async with self.session.begin():
-            task: Task | None = await self.task_repo.get_task_by_id(self, conn=self.session, id_value=task_id)
-                        
+            task: Task | None = await self.task_repo.get_task_by_id(
+                self, conn=self.session, id_value=task_id
+            )
+
             if not task:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Task not found")
-            
-            user = await self.intern_repo.get_intern_by_user_id(conn=self.session, user_id=user_id)
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Task not found"
+                )
+
+            user = await self.intern_repo.get_intern_by_user_id(
+                conn=self.session, user_id=user_id
+            )
             if not user:
-                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="User not found")
-            intern_ids = {intern.id for intern in task.interns}  
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="User not found"
+                )
+            intern_ids = {intern.id for intern in task.interns}
             if user_id not in intern_ids:
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="User not authorized to submit this task")
-         
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN,
+                    detail="User not authorized to submit this task",
+                )
+
             if task.is_submitted:
-                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Task is already submitted")
-                        
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST, detail="Task is already submitted"
+                )
+
             task.is_submitted = True
-            task.submitted_at = datetime.utcnow()                          
-                                 
-            updated_task = await self.task_repo.update_task(task)         
-           
+            task.submitted_at = datetime.utcnow()
+
+            updated_task = await self.task_repo.update_task(task)
+
             return TaskOutModel(
                 id=str(updated_task.id),
                 project_id=str(updated_task.project_id),
                 description=task.description,
                 is_completed=task.is_completed,
-                is_submitted=task.is_submitted,                
+                is_submitted=task.is_submitted,
                 due_date=task.due_date,
                 created_at=task.created_at,
-            )  
-    
+            )
+
     async def get_all_tasks_by_intern_id(self, intern_id: str) -> list[TaskOutModel]:
-        async with self.session.begin():  
+        async with self.session.begin():
             return [
                 TaskOutModel.from_model(task)
-                for task in await self.task_repo.get_all_tasks_by_intern_id(conn=self.session, intern_id=UUID(intern_id))                 
-            ]          
-          
-            
-                         
-            
+                for task in await self.task_repo.get_all_tasks_by_intern_id(
+                    conn=self.session, intern_id=UUID(intern_id)
+                )
+            ]
