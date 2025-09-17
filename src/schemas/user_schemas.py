@@ -1,13 +1,17 @@
+import re
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator, field_validator
 
 from src.common import DepartmentEnum, UserType
 from src.models import User
 from src.schemas.skill_schemas import SkillCreate
 
+PASSWORD_PATTERN = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+)
 
 class UserInModel(BaseModel):
     firstname: str
@@ -20,6 +24,14 @@ class UserInModel(BaseModel):
     department: DepartmentEnum
     work_location: str
 
+    @field_validator("password")
+    def validate_password(cls, v: str) -> str:
+        if not PASSWORD_PATTERN.match(v):
+            raise ValueError(
+                "Password must be at least 8 characters, include uppercase, "
+                "lowercase, number, and special character"
+            )
+        return v
 
 class UserOutModel(BaseModel):
     user_id: Annotated[str, UUID]
