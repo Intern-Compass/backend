@@ -1,15 +1,13 @@
 from datetime import datetime
-
 from pydantic import BaseModel
 
-from src.models.app_models import Project
+from ..models.app_models import Project
 
 
 class ProjectInModel(BaseModel):
     title: str
     description: str
     supervisor_id: str
-    division_id: str
 
 
 class ProjectOutModel(BaseModel):

@@ -43,10 +43,10 @@ class InternRepository:
 
         return user
 
-    async def get_intern_by_id(self, conn: AsyncSession, intern_id: str):
+    async def get_intern_by_id(self, conn: AsyncSession, intern_id: UUID):
         stmt: Select = (
             select(self.table)
-            .where(self.table.id == uuid.UUID(intern_id))
+            .where(self.table.id == intern_id)
             .options(
                 selectinload(Intern.user),
                 selectinload(Intern.user).selectinload(User.skills),

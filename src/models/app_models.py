@@ -334,16 +334,16 @@ class Task(Base):
         UUID(as_uuid=True),
         ForeignKey("supervisor.id", onupdate="CASCADE", ondelete="CASCADE"),
     )
-    title: Mapped[Optional[str]] = mapped_column(String)
-    description: Mapped[Optional[str]] = mapped_column(Text)    
-    is_completed: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
-    is_submitted: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)    
-    due_date: Mapped[Optional[date]] = mapped_column(Date)
+    title: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(Text)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_submitted: Mapped[bool] = mapped_column(Boolean, default=False)
+    due_date: Mapped[date] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(ZoneInfo("UTC"))
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    completed_at: Mapped[datetime] = mapped_column(DateTime)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime)
     
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
     supervisor: Mapped[Supervisor] = relationship("Supervisor", back_populates="tasks")

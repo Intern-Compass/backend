@@ -6,7 +6,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_429_TOO_MANY_REQUESTS
 
 from .routers.supervisor_router import router as supervisor_router
 from .routers.auth_router import router as auth_router
@@ -23,7 +23,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 @app.exception_handler(RateLimitExceeded)
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+    return JSONResponse(status_code=HTTP_429_TOO_MANY_REQUESTS, content={"detail": "Rate limit exceeded"})
 
 
 ORIGINS = ["*"]

@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import BackgroundTasks, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN
 
 from ..db import get_db_session
 from ..models.app_models import Project, Supervisor, Task
@@ -36,49 +36,53 @@ class ProjectService:
         self.session = session
         self.supervisor = supervisor
         
-    async def create_project(self, project_data: ProjectInModel) -> ProjectOutModel:
-        async with self.session.begin():            
-            supervisor_id=UUID(self.supervisor.supervisor_id)
-            if not self.supervisor:
-                raise HTTPException(status_code=404, detail="Supervisor not found")
+    async def create_project(self, project_data: ProjectInModel, supervisor_id: UUID) -> ProjectOutModel:
+        async with self.session.begin():
+            supervisor: Supervisor | None = await self.supervisor_repo.get_supervisor_details(
+                conn=self.session, supervisor_id=supervisor_id
+            )
+            if not supervisor:
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND, detail="Supervisor not found"
+                )
+
             project: Project = await self.project_repo.create_new_project(
-                user_id=supervisor_id, project_data=project_data, conn=self.session
+                supervisor_id=supervisor_id,
+                department_id=supervisor.user.department_id,
+                new_project=project_data,
+                conn=self.session
             )
 
-        return ProjectOutModel(
-            id=project.id,
-            title=project.title,
-            description=project.description,
-            supervisor_id=project.supervisor_id,
-            department_id=project.department_id,
-            created_at=project.created_at
-        )
+            return ProjectOutModel.from_model(project=project)
         
         
-    async def add_task_to_project(self, project_id: str, task_data: TaskInModel) -> TaskOutModel:
+    async def add_task_to_project(
+            self,
+            project_id: UUID,
+            supervisor_id: UUID,
+            task_data: TaskInModel
+    ) -> TaskOutModel:
         async with self.session.begin():
-            project = await self.project_repo.get_project_by_id(conn=self.session, id_value=project_id)            
+            project: Project | None = await self.project_repo.get_project_by_id(conn=self.session, project_id=project_id)
             if not project:
-                raise HTTPException(status_code=404, detail="Project not found")
-            
-            #create new task
-            task: Task = await self.task_repo.create_new_task(project_id=project.id, new_task=task_data, conn=self.session)
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Project not found")
+
+            if project.supervisor_id != supervisor_id:
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN, detail="Supervisor not authorized to add task to this project"
+                )
+            # Create new task
+            task: Task = await self.task_repo.create_new_task(
+                project_id=project.id, new_task=task_data, conn=self.session
+            )
             
             #add task to project
             project.tasks.append(task)
             
-            return TaskOutModel(
-                id=str(task.id),
-                project_id=str(task.project_id),
-                title=task.title,
-                description=task.description,
-                is_completed=task.is_completed,
-                is_submitted=task.is_submitted,  
-                due_date=task.due_date,
-                created_at=task.created_at,
-            )
-            
-    
+            return TaskOutModel.from_model(task=task)
+
+
+
     
             
     

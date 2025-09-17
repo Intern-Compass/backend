@@ -45,19 +45,27 @@ async def perform_matches(
 
 @router.post("/project", tags=["Project"])
 async def create_new_project(
-    project_service: Annotated[ProjectService, Depends()],    
+    project_service: Annotated[ProjectService, Depends()],
+    supervisor: Annotated[SupervisorOutModel, Depends(get_supervisor_user)],
     project_data: ProjectInModel     
 ) -> ProjectOutModel:      
-    return await project_service.create_project(project_data=project_data)
+    return await project_service.create_project(
+        project_data=project_data, supervisor_id=UUID(supervisor.supervisor_id)
+    )
 
 
 @router.patch("/project-task", tags=["Project", "Task"])
 async def add_task_to_project(
-    project_service: Annotated[ProjectService, Depends()],    
+    project_service: Annotated[ProjectService, Depends()],
+    supervisor: Annotated[SupervisorOutModel, Depends(get_supervisor_user)],
+    task_data: TaskInModel,
     project_id: str,
-    task_data: TaskInModel
 ) -> TaskOutModel:
-    return await project_service.add_task_to_project(project_id=project_id, task_data=task_data)
+    return await project_service.add_task_to_project(
+        project_id=UUID(project_id),
+        supervisor_id=UUID(supervisor.supervisor_id),
+        task_data=task_data
+    )
 
 
 @router.patch("/assign-task", tags=["Intern", "Task"])
@@ -66,7 +74,7 @@ async def assign_task_to_intern(
     intern_id: str,
     task_id: str    
 ) -> TaskOutModel:
-    return await task_service.assign_task_to_intern(task_id=task_id, intern_id=intern_id)
+    return await task_service.assign_task_to_intern(task_id=UUID(task_id), intern_id=UUID(intern_id))
 
 
 @router.patch("/mark-task-as-completed", tags=["Task"])

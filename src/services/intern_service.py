@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_404_NOT_FOUND
 
 from ..db import get_db_session
-from ..models.app_models import Intern, Supervisor
+from ..models.app_models import Intern
 from ..repositories.intern_repo import InternRepository
 from ..repositories.project_repo import ProjectRepository
 from ..repositories.supervisor_repo import SupervisorRepository
@@ -70,7 +70,7 @@ class InternService:
         async with self.session.begin():
             intern = await self.intern_repo.get_intern_by_user_id(self.session, user_id)
             if not intern:
-                raise HTTPException(status_code=404, detail="Intern not found")
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
             return await self.task_repo.get_all_tasks_by_intern_id(
                 self.session, intern.id
             )

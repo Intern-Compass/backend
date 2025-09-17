@@ -59,7 +59,7 @@ async def get_intern_todos(
     return todos
 
 
-@router.post("/todos", tags=["Todos", "Dashboard"], status_code=201)
+@router.post("/todos", tags=["Todos", "Dashboard"])
 async def create_intern_todo(
     todo_data: TodoInModel,
     user: Annotated[InternOutModel, Depends(get_intern_user)],
@@ -80,13 +80,13 @@ async def complete_intern_todo(
         todo_id=todo_id, intern_id=UUID(intern.intern_id)
     )
 
-@router.patch("/submit-task", tags=["Task"])
-async def submit_task(
-    user: Annotated[InternOutModel, Depends(get_intern_user)],
-    task_service: Annotated[TaskService, Depends()],
-    task_id: str
-):
-    return await task_service.submit_task(tas_id=task_id, user_id=user.intern_id)
+# @router.patch("/submit-task", tags=["Task"])
+# async def submit_task(
+#     user: Annotated[InternOutModel, Depends(get_intern_user)],
+#     task_service: Annotated[TaskService, Depends()],
+#     task_id: str
+# ):
+#     return await task_service.submit_task(tas_id=task_id, user_id=user.intern_id)
 
 @router.get("/all-tasks", tags=["Tasks"])
 async def get_all_tasks(
