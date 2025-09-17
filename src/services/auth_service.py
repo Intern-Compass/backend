@@ -268,6 +268,7 @@ class AuthService:
 
     async def reset_password(self, token: str, new_password: str):
         async with self.session.begin():
+            logger.info(f"Resetting password for token {token}")
             try:
                 user_id: str = await PasswordResetToken.decode(
                     conn=self.session, token=token

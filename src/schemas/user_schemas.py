@@ -66,6 +66,15 @@ class ResetPasswordRequest(BaseModel):
     token: str
     password: str
 
+    @field_validator("password")
+    def validate_password(cls, v: str) -> str:
+        if not PASSWORD_PATTERN.match(v):
+            raise ValueError(
+                "Password must be at least 8 characters, include uppercase, "
+                "lowercase, number, and special character"
+            )
+        return v
+
 
 class UserEmail(BaseModel):
     email: Annotated[str, EmailStr]
