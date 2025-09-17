@@ -6,11 +6,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
 from starlette.responses import Response
 
+from ..schemas import UserOutModel
 from ..schemas.intern_schemas import InternInModel
 from ..schemas.supervisor_schemas import SupervisorInModel
 from ..schemas.user_schemas import ResetPasswordRequest, UserEmail, VerificationCode
 from ..services import AuthService
-from ..utils import limiter
+from ..utils import limiter, get_current_user
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["Auth Router"])
 """Router concerns everything that has to do with authentication."""
@@ -87,3 +88,10 @@ async def refresh_token(
     auth_service: Annotated[AuthService, Depends()],
 ):
     return await auth_service.refresh_token(request=request, response=response)
+
+
+@router.get("/get-user")
+async def get_user_with_access_token(
+    user: Annotated[UserOutModel, Depends(get_current_user)]
+):
+    return user
