@@ -4,7 +4,7 @@ from enum import StrEnum
 from uuid import UUID, uuid4
 
 from jwt import PyJWTError, decode, encode
-from sqlalchemy import exists, delete
+from sqlalchemy import exists, delete, Delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common import UserType
@@ -91,13 +91,22 @@ class BaseToken[DecodedType](ABC):
 class RevocableToken[DecodedType](BaseToken[DecodedType]):
     @classmethod
     async def _create_token_in_db(
-        cls, conn: AsyncSession, expires_at: datetime
+        cls, conn: AsyncSession, user_id: UUID, expires_at: datetime
     ) -> Token:
-        new_token = Token(expires_at=expires_at)
+        new_token = Token(user_id=user_id, expires_at=expires_at)
         conn.add(new_token)
         await conn.flush()
         await conn.refresh(new_token)
         return new_token
+
+    @classmethod
+    async def _delete_all_user_tokens_in_db(cls, conn: AsyncSession, user_id: UUID | str):
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+
+        stmt: Delete = delete(Token).where(Token.user_id == user_id)
+        await conn.execute(stmt)
+        await conn.flush()
 
     @classmethod
     async def new(
@@ -109,13 +118,15 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
     ) -> str:
         now = datetime.now(UTC)
         expires_at = now + cls.token_type.lifetime
-        token_in_db = await cls._create_token_in_db(conn=conn, expires_at=expires_at)
+        await cls._delete_all_user_tokens_in_db(user_id=sub, conn=conn)
+        token_in_db = await cls._create_token_in_db(conn=conn, user_id=sub, expires_at=expires_at)
+
         return await super().new(
             sub=sub, data=data, jti=str(token_in_db.jti), now=now, expires_at=expires_at
         )
 
     @classmethod
-    async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
+    async def _ensure_token_in_db(cls, conn: AsyncSession, jti: UUID) -> None:
         token_exists = await conn.scalar(exists(Token).where(Token.jti == jti).select())
         if not token_exists:
             raise InvalidTokenError
@@ -124,21 +135,17 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
     async def decode(cls, conn: AsyncSession, token: str) -> dict:
         claims = await super().decode(token=token)
         # Ensuring the token is in the database
-        if claims.get("jti"):
-            jti = claims["jti"]
+        if jti := claims.get("jti"):
+            if isinstance(jti, str):
+                jti = UUID(jti)
             await cls._ensure_token_in_db(conn=conn, jti=jti)
-            await cls._revoke(conn=conn, token=token)
+            await cls._revoke(conn=conn, jti=jti)
         else:
             raise InvalidTokenError
         return claims
 
     @classmethod
-    async def _revoke(cls, conn: AsyncSession, token: str) -> None:
-        claims = await super().decode(token=token)
-        if claims.get("jti"):
-            jti = claims["jti"]
-        else:
-            raise InvalidTokenError
+    async def _revoke(cls, conn: AsyncSession, jti: UUID) -> None:
         stmt = delete(Token).where(Token.jti == jti)
         await conn.execute(stmt)
 
