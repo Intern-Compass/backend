@@ -251,7 +251,7 @@ class AuthService:
                 )
 
             if user:
-                token = PasswordResetToken.new(conn=self.session, user_id=user.id)
+                token = await PasswordResetToken.new(conn=self.session, user_id=user.id)
                 user_email = user.email
 
         self.background_task.add_task(
