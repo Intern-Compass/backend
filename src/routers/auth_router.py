@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
@@ -38,10 +38,11 @@ async def create_intern(
 @limiter.limit("5/minute")
 async def verify_user_and_create(
     request: Request,
+    response: Response,
     code: VerificationCode,
     general_user_service: Annotated[AuthService, Depends()],
 ):
-    return await general_user_service.verify_user(code=code.code)
+    return await general_user_service.verify_user(code=code.code, response=response)
 
 
 @router.post("/token")
@@ -51,7 +52,7 @@ async def login(
     response: Response,
 ):
     """Logs the intern in and returns access and refresh tokens"""
-    return await auth_service.login(username=form.username, password=form.password)
+    return await auth_service.login(username=form.username, password=form.password, response=response)
 
 
 @router.post("/forgot-password")
@@ -80,7 +81,7 @@ async def reset_password(
 @limiter.limit("5/minute")
 async def refresh_token(
     request: Request,
-    token: Annotated[str, Body()],
+    response: Response,
     auth_service: Annotated[AuthService, Depends()],
 ):
-    return await auth_service.refresh_token(token=token)
+    return await auth_service.refresh_token(request=request, response=response)

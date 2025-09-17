@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from fastapi import BackgroundTasks, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
+from starlette.responses import Response
 from starlette.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
@@ -32,7 +33,7 @@ from ..utils import (
     generate_random_code,
     hash_password,
     normalize_string,
-    password_is_correct,
+    password_is_correct, set_custom_cookie,
 )
 
 from ..infra.email import send_email
@@ -142,7 +143,7 @@ class AuthService:
 
         return {"detail": "Verification code sent to email"}
 
-    async def verify_user(self, code: str) -> dict[str, str]:
+    async def verify_user(self, code: str, response: Response) -> dict[str, str]:
         async with self.session.begin():  # Transactional, for atomicity
             verification_code: VerificationCode = await self.code_repo.get_code(
                 conn=self.session, value=code
@@ -176,12 +177,18 @@ class AuthService:
                     logger.info(f"User {verified_user.email} has been verified")
 
             access_token: str = await self._new_access_token_from_user(verified_user)
+            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=verified_user.id)
 
+        set_custom_cookie(
+            response=response,
+            key="refresh_token",
+            value=refresh_token,
+            max_age=timedelta(days=30)
+        )
         # Send confirmation mail once user has been created.
-        user_normalized_email: str = normalize_string(verified_user.email)
         self.background_task.add_task(
             send_email,
-            user_normalized_email,
+            verified_user.email,
             context=EmailVerifiedContext(),
         )
         return {
@@ -190,114 +197,121 @@ class AuthService:
             "token_type": "Bearer",
         }
 
-    async def login(self, username: str, password: str):
-        existing_user: User = await self.user_repo.get_user_by_email_or_phone(
-            conn=self.session, email=username
+    async def login(self, username: str, password: str, response: Response):
+        async with self.session.begin():
+            existing_user: User = await self.user_repo.get_user_by_email_or_phone(
+                conn=self.session, email=username
+            )
+            if not existing_user:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                )
+
+            if not password_is_correct(existing_user.password, password):
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                )
+
+            if not existing_user.verified:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
+                )
+
+            access_token: str = await self._new_access_token_from_user(existing_user)
+            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=existing_user.id)
+
+        set_custom_cookie(
+            response=response,
+            key="refresh_token",
+            value=refresh_token,
+            max_age=timedelta(days=30)
         )
-        if not existing_user:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
-            )
-
-        if not password_is_correct(existing_user.password, password):
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
-            )
-
-        if not existing_user.verified:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid login credentials"
-            )
-
-        access_token: str = await self._new_access_token_from_user(existing_user)
-
         return {
             "access_token": access_token,
             "user_type": existing_user.type,
             "token_type": "Bearer",
         }
 
-    async def _verify_code(
-        self, code: str, conn: AsyncSession
-    ) -> bool | VerificationCode:
-        """Central method for verifying a code."""
-        verification_code: VerificationCode = await self.code_repo.get_code(
-            conn=conn, value=code
-        )
-
-        if not verification_code:
-            return False
-        elif verification_code.expires_at <= datetime.now(tz=ZoneInfo("UTC")):
-            return False
-        else:
-            await self.code_repo.delete_code(conn=conn, value=code)
-            return verification_code
 
     async def request_reset_password(self, email: str):
         async with self.session.begin():
             user: User = await self.user_repo.get_user_by_email_or_phone(
                 conn=self.session, email=email
             )
-        if not user:
-            logger.info(f"No user with email {email} exists to send verification code.")
+            if not user:
+                logger.info(f"No user with email {email} exists to send verification code.")
 
-        if user:
-            token = PasswordResetToken.new(user_id=user.id)
-            user_email = user.email
-            self.background_task.add_task(
-                send_email,
-                user_email,
-                context=ForgotPasswordContext(
-                    reset_link=f"{settings.FRONTEND_URL}?reset_link={token}"
-                ),
-            )
+            if user:
+                token = PasswordResetToken.new(conn=self.session, user_id=user.id)
+                user_email = user.email
+
+        self.background_task.add_task(
+            send_email,
+            user_email,
+            context=ForgotPasswordContext(
+                reset_link=f"{settings.FRONTEND_URL}?reset_link={token}"
+            ),
+        )
         response = {
             "detail": "If this email exists, a password reset email will be sent."
         }
         return response
 
     async def reset_password(self, token: str, new_password: str):
-        try:
-            user_id: str = await PasswordResetToken.decode(self.session, token)
-        except InvalidTokenError:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        async with self.session.begin():
+            try:
+                user_id: str = await PasswordResetToken.decode(conn=self.session, token=token)
+            except InvalidTokenError:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                )
+            new_password: str = hash_password(new_password)
+            values_to_update: dict = {"password": new_password}
+            updated_user: User = await self.user_repo.update(
+                conn=self.session,
+                user_id=UUID(user_id),
+                values=values_to_update,
             )
-        new_password: str = hash_password(new_password)
-        values_to_update: dict = {"password": new_password}
-        updated_user: User = await self.user_repo.update(
-            conn=self.session,
-            user_id=UUID(user_id),
-            values=values_to_update,
-        )
 
         self.background_task.add_task(
             send_email,
             updated_user.email,
             context=UpdatedUserContext(values_updated=list(values_to_update.keys())),
         )
-        await PasswordResetToken.revoke(conn=self.session, token=token)
         return {
             "detail": "Your password has been reset successfully, please proceed to log in"
         }
 
-    async def refresh_token(self, token: str):
-        try:
-            user_id: str = await RefreshToken.decode(self.session, token)
-        except InvalidTokenError:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+    async def refresh_token(self, request: Request, response: Response):
+        async with self.session.begin():
+            token: str | None = request.cookies.get("refresh_token")
+            if not token:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                )
+            try:
+                user_id: str = await RefreshToken.decode(self.session, token)
+            except InvalidTokenError:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                )
+            user = await self.user_repo.get_user_by_id(
+                conn=self.session, user_id=UUID(user_id)
             )
-        user = await self.user_repo.get_user_by_id(
-            conn=self.session, user_id=UUID(user_id)
+            if not user:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
+                )
+
+            access_token: str = await self._new_access_token_from_user(user)
+            refresh_token: str = await RefreshToken.new(conn=self.session, user_id=UUID(user_id))
+
+        set_custom_cookie(
+            response=response,
+            key="refresh_token",
+            value=refresh_token,
+            max_age=timedelta(days=30)
         )
-        if not user:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
-
-        access_token: str = await self._new_access_token_from_user(user)
-
         return {
             "access_token": access_token,
             "user_type": user.type,

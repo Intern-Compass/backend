@@ -117,7 +117,7 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
     @classmethod
     async def _ensure_token_in_db(cls, conn: AsyncSession, jti: str) -> None:
         token_exists = await conn.scalar(
-            exists(Token.__table__).where(Token.jti == jti).select()
+            exists(Token).where(Token.jti == jti).select()
         )
         if not token_exists:
             raise InvalidTokenError
@@ -129,20 +129,20 @@ class RevocableToken[DecodedType](BaseToken[DecodedType]):
         if claims.get("jti"):
             jti = claims["jti"]
             await cls._ensure_token_in_db(conn=conn, jti=jti)
+            await cls._revoke(conn=conn, token=token)
         else:
             raise InvalidTokenError
         return claims
 
     @classmethod
-    async def revoke(cls, conn: AsyncSession, token: str) -> None:
+    async def _revoke(cls, conn: AsyncSession, token: str) -> None:
         claims = await super().decode(token=token)
         if claims.get("jti"):
             jti = claims["jti"]
         else:
             raise InvalidTokenError
-        stmt = delete(Token.__table__).where(Token.jti == jti)
+        stmt = delete(Token).where(Token.jti == jti)
         await conn.execute(stmt)
-        await conn.commit()
 
 
 class AccessToken(BaseToken[UserOutModel]):

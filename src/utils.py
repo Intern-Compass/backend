@@ -1,4 +1,5 @@
 import random
+from datetime import timedelta
 from enum import StrEnum
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from starlette.responses import Response
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 
 from .logger import logger
@@ -44,7 +46,7 @@ def generate_random_code() -> str:
 oauth_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
-def get_current_user(
+async def get_current_user(
     token: Annotated[str, Depends(oauth_scheme)],
 ) -> UserOutModel:
     """
@@ -54,7 +56,7 @@ def get_current_user(
     :return: UserOutModel
     """
     try:
-        payload: UserOutModel = AccessToken.decode(token=token)
+        payload: UserOutModel = await AccessToken.decode(token=token)
         return payload
     except InvalidTokenError as e:
         logger.error(e)
@@ -91,3 +93,20 @@ limiter = Limiter(
     default_limits=["100/hour"],
     enabled=settings.RATE_LIMIT_ENABLED
 )
+
+def set_custom_cookie(
+    response: Response,
+    key: str,
+    value: str,
+    path: str | None = None,
+    max_age: timedelta | None = None,
+) -> None:
+    response.set_cookie(
+        key=key,
+        value=value,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path=path,
+        max_age=int(max_age.total_seconds()),
+    )
