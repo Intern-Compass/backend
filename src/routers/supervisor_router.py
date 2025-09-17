@@ -7,12 +7,11 @@ from fastapi.params import Depends
 from src.schemas.supervisor_schemas import SupervisorOutModel
 from src.schemas.project_schemas import ProjectInModel, ProjectOutModel
 from src.schemas.task_schemas import TaskInModel, TaskOutModel
-from src.schemas.intern_schemas import InternOutModel
 from src.services.matching_service import MatchingService
 from src.services.supervisor_service import SupervisorService
 from src.services.project_service import ProjectService
 from src.services.task_service import TaskService
-from src.utils import get_supervisor_user, get_intern_user
+from src.utils import get_supervisor_user
 
 router: APIRouter = APIRouter(prefix="/supervisor", tags=["Supervisor"])
 
