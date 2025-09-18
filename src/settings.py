@@ -5,7 +5,6 @@ from typing import Annotated
 
 class Settings(BaseSettings):
     DB_URL: str
-    DB_PROD_URL: str
     FRONTEND_URL: str
 
     SECRET_KEY: str
