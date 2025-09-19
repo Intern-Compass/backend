@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette.requests import Request
 from starlette.responses import Response
 
+from ..common import UserType
 from ..schemas import UserOutModel
 from ..schemas.intern_schemas import InternInModel
 from ..schemas.supervisor_schemas import SupervisorInModel
@@ -22,6 +23,7 @@ async def create_supervisor(
     create_supervisor_request: SupervisorInModel,
     general_user_service: Annotated[AuthService, Depends()],
 ) -> dict[str, str]:
+    create_supervisor_request.type = UserType.SUPERVISOR
     return await general_user_service.create_unverified_new_user(
         create_supervisor_request
     )
@@ -32,6 +34,7 @@ async def create_intern(
     create_intern_request: InternInModel,
     general_user_service: Annotated[AuthService, Depends()],
 ) -> dict[str, str]:
+    create_intern_request.type = UserType.INTERN
     return await general_user_service.create_unverified_new_user(create_intern_request)
 
 

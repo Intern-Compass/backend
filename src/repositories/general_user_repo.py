@@ -65,7 +65,7 @@ class UserRepository:
             password=new_user.password,
             date_of_birth=new_user.date_of_birth,
             work_location=new_user.work_location,
-            type=UserType.SUPERVISOR,
+            type=new_user.type.value,
             department_id=new_user.department.value,
         )
         skill_list = [

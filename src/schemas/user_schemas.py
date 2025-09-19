@@ -23,6 +23,7 @@ class UserInModel(BaseModel):
     date_of_birth: date
     department: DepartmentEnum
     work_location: str
+    type: UserType | None = None
 
     @field_validator("password")
     def validate_password(cls, v: str) -> str:

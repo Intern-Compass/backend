@@ -111,20 +111,20 @@ class AuthService:
                 # Hash password  when creating a new user
                 new_user.password = hash_password(password=new_user.password)
 
-                unverified_user: User = await self.user_repo.create_new_user(
+                unverified_base_user: User = await self.user_repo.create_new_user(
                     conn=self.session, new_user=new_user, skill_repo=self.skill_repo
                 )
 
-                if isinstance(new_user, InternInModel):
+                if new_user.type == UserType.INTERN:
                     unverified_user: User = await self.intern_repo.create_new_intern(
-                        conn=self.session, new_intern=new_user, user=unverified_user
+                        conn=self.session, new_intern=new_user, user=unverified_base_user
                     )
-                elif isinstance(new_user, SupervisorInModel):
+                elif new_user.type == UserType.SUPERVISOR:
                     unverified_user: User = (
                         await self.supervisor_repo.create_new_supervisor(
                             conn=self.session,
                             new_supervisor=new_user,
-                            user=unverified_user,
+                            user=unverified_base_user,
                         )
                     )
 
