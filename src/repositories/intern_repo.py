@@ -79,7 +79,8 @@ class InternRepository:
     async def get_unmatched_interns(self, conn: AsyncSession):
         stmt: Select = (
             select(self.table)
-            .where(Intern.supervisor_id == None)
+            .join(Intern.user)
+            .where(and_(Intern.supervisor_id == None, User.verified))
             .options(
                 selectinload(Intern.user).selectinload(User.skills),
                 selectinload(Intern.user).selectinload(User.department),
