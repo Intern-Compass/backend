@@ -254,13 +254,14 @@ class AuthService:
                 token = await PasswordResetToken.new(conn=self.session, user_id=user.id)
                 user_email = user.email
 
-        self.background_task.add_task(
-            send_email,
-            user_email,
-            context=ForgotPasswordContext(
-                reset_link=f"{settings.FRONTEND_URL}?token={token}"
-            ),
-        )
+                self.background_task.add_task(
+                    send_email,
+                    user_email,
+                    context=ForgotPasswordContext(
+                        reset_link=f"{settings.FRONTEND_URL}?token={token}"
+                    ),
+                )
+
         response = {
             "detail": "If this email exists, a password reset email will be sent."
         }
