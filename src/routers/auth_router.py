@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi.params import Depends
@@ -92,6 +93,17 @@ async def refresh_token(
 ):
     return await auth_service.refresh_token(request=request, response=response)
 
+@router.post("/logout")
+async def logout(
+        request: Request,
+        response: Response,
+        _: Annotated[UserOutModel, Depends(get_current_user)],
+        auth_service: Annotated[AuthService, Depends()]
+):
+    return await auth_service.logout(
+        request=request,
+        response=response
+    )
 
 @router.get("/get-user")
 async def get_user_with_access_token(

@@ -330,3 +330,18 @@ class AuthService:
             "user_type": user.type,
             "token_type": "Bearer",
         }
+
+    async def logout(self, request: Request, response: Response):
+        if not (rt := request.cookies.get("refresh_token")):
+            logger.info(
+                "Token not stored in client"
+            )
+        else:
+            async with self.session.begin():
+                user_id = await RefreshToken.decode(conn=self.session, token=rt)
+                set_custom_cookie(response=response, key="refresh_token", value="")
+
+            logger.info(
+                f"Refresh token for User {user_id} has been deleted"
+            )
+        return {"detail": "Logged out successfully"}

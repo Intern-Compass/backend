@@ -100,7 +100,7 @@ def set_custom_cookie(
     key: str,
     value: str,
     path: str | None = None,
-    max_age: timedelta | None = None,
+    max_age: timedelta | None = timedelta(days=30),
 ) -> None:
     response.set_cookie(
         key=key,
