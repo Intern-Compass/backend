@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common import DepartmentEnum
 from ..db import get_db_session
 from ..logger import logger
 from ..matching import matcher
@@ -63,7 +64,9 @@ class MatchingService:
                     supervisor_details = supervisor_map[supervisor_id]
 
                     formatted_supervisor: BasicUserDetails = BasicUserDetails(
-                        name=supervisor_details.user.firstname,
+                        firstname=supervisor_details.user.firstname,
+                        lastname=supervisor_details.user.lastname,
+                        department=DepartmentEnum(supervisor_details.user.department_id).name,
                         email=supervisor_details.user.email,
                         phone_number=supervisor_details.user.phone_number,
                         skills=", ".join(
@@ -73,7 +76,9 @@ class MatchingService:
 
                     formatted_intern_list: list[BasicUserDetails] = [
                         BasicUserDetails(
-                            name=intern_map[intern_id].user.firstname,
+                            firstname=intern_map[intern_id].user.firstname,
+                            lastname=intern_map[intern_id].user.lastname,
+                            department=DepartmentEnum(intern_map[intern_id].user.department_id).name,
                             email=intern_map[intern_id].user.email,
                             phone_number=intern_map[intern_id].user.phone_number,
                             skills=", ".join(

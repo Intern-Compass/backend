@@ -30,7 +30,7 @@ def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     )
 
 
-ORIGINS = ["http://localhost:3000", "https://intern-compass.vercel.app"]
+ORIGINS = ["http://localhost:3000", "https://intern-compass.vercel.app", "http://localhost:4000"]
 # noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,

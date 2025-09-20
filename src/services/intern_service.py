@@ -13,6 +13,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_404_NOT_FOUND
 
+from ..common import DepartmentEnum
 from ..db import get_db_session
 from ..models.app_models import Intern
 from ..repositories.intern_repo import InternRepository
@@ -58,7 +59,9 @@ class InternService:
                 )
 
             return BasicUserDetails(
-                name=intern.supervisor.user.firstname,
+                firstname=intern.supervisor.user.firstname,
+                lastname=intern.supervisor.user.lastname,
+                department=DepartmentEnum(intern.supervisor.user.department_id).name,
                 email=intern.supervisor.user.email,
                 phone_number=intern.supervisor.user.phone_number,
                 skills=", ".join(
