@@ -61,7 +61,7 @@ class InternService:
             return BasicUserDetails(
                 firstname=intern.supervisor.user.firstname,
                 lastname=intern.supervisor.user.lastname,
-                department=DepartmentEnum(intern.supervisor.user.department_id).name,
+                department=DepartmentEnum(intern.supervisor.user.department_id),
                 email=intern.supervisor.user.email,
                 phone_number=intern.supervisor.user.phone_number,
                 skills=", ".join(

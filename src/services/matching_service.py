@@ -66,7 +66,7 @@ class MatchingService:
                     formatted_supervisor: BasicUserDetails = BasicUserDetails(
                         firstname=supervisor_details.user.firstname,
                         lastname=supervisor_details.user.lastname,
-                        department=DepartmentEnum(supervisor_details.user.department_id).name,
+                        department=DepartmentEnum(supervisor_details.user.department_id),
                         email=supervisor_details.user.email,
                         phone_number=supervisor_details.user.phone_number,
                         skills=", ".join(
@@ -78,7 +78,7 @@ class MatchingService:
                         BasicUserDetails(
                             firstname=intern_map[intern_id].user.firstname,
                             lastname=intern_map[intern_id].user.lastname,
-                            department=DepartmentEnum(intern_map[intern_id].user.department_id).name,
+                            department=DepartmentEnum(intern_map[intern_id].user.department_id),
                             email=intern_map[intern_id].user.email,
                             phone_number=intern_map[intern_id].user.phone_number,
                             skills=", ".join(

@@ -20,7 +20,7 @@ class InternInModel(UserInModel):
 class BasicUserDetails(BaseModel):
     firstname: str
     lastname: str
-    department: str
+    department: DepartmentEnum
     email: Annotated[str, EmailStr]
     phone_number: str
     skills: str | None = None
