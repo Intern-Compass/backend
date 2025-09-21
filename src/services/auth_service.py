@@ -74,9 +74,9 @@ class AuthService:
     async def _new_access_token_from_user(user: User) -> str:
         match user.type:
             case UserType.SUPERVISOR:
-                user_to_login = SupervisorOutModel.from_supervisor(user)
+                user_to_login = SupervisorOutModel.from_supervisor_user(user)
             case UserType.INTERN:
-                user_to_login = InternOutModel.from_intern(user)
+                user_to_login = InternOutModel.from_intern_user(user)
             case _:
                 user_to_login = UserOutModel.from_user(user)
 

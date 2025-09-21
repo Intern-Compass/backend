@@ -28,13 +28,15 @@ class BasicUserDetails(BaseModel):
 
 class InternOutModel(UserOutModel):
     intern_id: Annotated[str, UUID]
+    supervisor: str | None = None
     bio: str | None = None
     school: str | None = None
     internship_start_date: str
     internship_end_date: str
+    skills: str | None = None
 
     @classmethod
-    def from_intern(cls, user: User) -> "InternOutModel":
+    def from_intern_user(cls, user: User) -> "InternOutModel":
         return InternOutModel(
             user_id=str(user.id),
             firstname=user.firstname,
@@ -52,15 +54,17 @@ class InternOutModel(UserOutModel):
             internship_end_date=user.intern.end_date.isoformat(),
         )
 
+
     @classmethod
     def from_model(cls, intern: Intern):
         return InternOutModel(
-            user_id=str(intern.id),
+            user_id=str(intern.user.id),
             firstname=intern.user.firstname,
             lastname=intern.user.lastname,
             phone_number=intern.user.phone_number,
             email=intern.user.email,
             type=intern.user.type,
+            supervisor=return_supervisor_id(intern.supervisor_id),
             department=DepartmentEnum(intern.user.department_id),
             date_of_birth=intern.user.date_of_birth.isoformat(),
             work_location=intern.user.work_location,
@@ -69,4 +73,11 @@ class InternOutModel(UserOutModel):
             school=intern.school,
             internship_start_date=intern.start_date.isoformat(),
             internship_end_date=intern.end_date.isoformat(),
+            skills = ", ".join([skill.name for skill in intern.user.skills])
         )
+
+def return_supervisor_id(supervisor_id: UUID | None = None):
+    if not supervisor_id:
+        return None
+
+    return str(supervisor_id)

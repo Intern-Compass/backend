@@ -5,11 +5,13 @@ from fastapi import BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common import DepartmentEnum
 from ..db import get_db_session
 from ..models.app_models import Intern, Supervisor
 from ..repositories.intern_repo import InternRepository
 from ..repositories.supervisor_repo import SupervisorRepository
-from ..schemas.intern_schemas import InternOutModel
+from ..schemas.intern_schemas import InternOutModel, BasicUserDetails
+from ..schemas.supervisor_schemas import SupervisorOutModel
 
 
 class SupervisorService:
@@ -39,4 +41,4 @@ class SupervisorService:
                 Supervisor
             ] = await self.supervisor_repo.get_supervisors_details(conn=self.session)
 
-        return supervisors
+        return [SupervisorOutModel.from_model(supervisor) for supervisor in supervisors]

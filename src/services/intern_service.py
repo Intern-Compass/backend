@@ -7,7 +7,7 @@ This module will handle:
 """
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from fastapi import HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ from ..repositories.intern_repo import InternRepository
 from ..repositories.project_repo import ProjectRepository
 from ..repositories.supervisor_repo import SupervisorRepository
 from ..repositories.task_repo import TaskRepository
-from ..schemas.intern_schemas import BasicUserDetails
+from ..schemas.intern_schemas import BasicUserDetails, InternOutModel
 from ..schemas.project_schemas import ProjectOutModel
 from ..schemas.task_schemas import TaskOutModel
 
@@ -97,10 +97,14 @@ class InternService:
 
         return interns
 
-    async def get_unmatched_interns(self):
-        async with self.session.begin():
-            unmatched_interns: list[
-                Intern
-            ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
+    async def get_all_unmatched_interns(self):
+        unmatched_interns: Sequence[Intern] = await self.intern_repo.get_unmatched_interns(conn=self.session)
 
-        return unmatched_interns
+        return [InternOutModel.from_model(intern) for intern in unmatched_interns]
+
+    async def get_all_interns(self):
+        interns: Sequence[Intern] = await self.intern_repo.get_interns(
+            conn=self.session
+        )
+
+        return [InternOutModel.from_model(intern) for intern in interns]

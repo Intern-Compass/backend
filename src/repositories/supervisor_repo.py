@@ -42,11 +42,11 @@ class SupervisorRepository:
         return result.scalars().all()
 
     async def assign_interns_to_supervisor(
-        self, supervisor_id: id, conn: AsyncSession, interns_to_assign: list[Intern]
+        self, supervisor_id: UUID, conn: AsyncSession, interns_to_assign: list[Intern]
     ):
         stmt: Select = (
             select(self.table)
-            .where(Supervisor.id == uuid.UUID(supervisor_id))
+            .where(Supervisor.id == supervisor_id)
             .options(selectinload(Supervisor.interns))
         )
         supervisor: Supervisor = (await conn.execute(stmt)).scalar_one()

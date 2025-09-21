@@ -3,7 +3,7 @@ import uuid
 from uuid import UUID
 
 import sqlalchemy.exc
-from sqlalchemy import Select, select, Result, and_
+from sqlalchemy import Select, select, Result, and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -149,7 +149,17 @@ class InternRepository:
         stmt = (
             select(self.table)
             .where(self.table.supervisor_id == supervisor_id)
-            .options(selectinload(self.table.user))
+            .options(
+                selectinload(self.table.user),
+                selectinload(self.table.user).selectinload(User.skills)
+            )
         )
         result = await conn.execute(stmt)
         return result.scalars().all()
+
+    async def unassign_supervisor(self, conn: AsyncSession, intern_id: UUID):
+        do_update_dict: dict = {
+            "supervisor_id": None
+        }
+        stmt = update(self.table).where(Intern.id == intern_id).values(**do_update_dict)
+        await conn.execute(stmt)

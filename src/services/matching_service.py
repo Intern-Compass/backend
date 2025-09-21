@@ -2,8 +2,10 @@ from collections import defaultdict
 from typing import Annotated
 from uuid import UUID
 
+from fastapi import HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_409_CONFLICT
 
 from ..common import DepartmentEnum
 from ..db import get_db_session
@@ -12,7 +14,7 @@ from ..matching import matcher
 from ..models.app_models import Supervisor, Intern
 from ..repositories.intern_repo import InternRepository
 from ..repositories.supervisor_repo import SupervisorRepository
-from ..schemas.intern_schemas import BasicUserDetails
+from ..schemas.intern_schemas import BasicUserDetails, InternOutModel
 
 
 class MatchingService:
@@ -124,3 +126,54 @@ class MatchingService:
                             continue
 
         return {"detail": "Matching performed successfully"}
+
+    async def manually_match_supervisor_to_intern(self, supervisor_id: UUID, intern_id: UUID):
+        async with self.session.begin():
+            intern: Intern = await self.intern_repo.get_intern_by_id(
+                conn=self.session,
+                intern_id=intern_id
+            )
+
+            if not intern:
+                raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
+
+            if sup_id := intern.supervisor_id:
+                if sup_id == supervisor_id:
+                    raise HTTPException(
+                        status_code=HTTP_409_CONFLICT,
+                        detail= "This supervisor has already been assigned to this intern"
+                    )
+
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST,
+                    detail="Intern has already been matched to a supervisor. "
+                           "Unmatch the existing supervisor before matching a new one"
+                )
+
+            assigned_interns: list[Intern] =  await self.supervisor_repo.assign_interns_to_supervisor(
+                supervisor_id=supervisor_id,
+                interns_to_assign=[intern],
+                conn=self.session
+            )
+
+            return [InternOutModel.from_model(intern) for intern in assigned_interns]
+
+    async def unmatch_supervisor_from_intern(self, intern_id: UUID):
+        async with self.session.begin():
+            intern: Intern = await self.intern_repo.get_intern_by_id(
+                conn=self.session,
+                intern_id=intern_id
+            )
+
+            if not intern.supervisor_id:
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST,
+                    detail="Intern has not been assigned a supervisor yet"
+                )
+
+            await self.intern_repo.unassign_supervisor(
+                conn=self.session,
+                intern_id=intern_id
+            )
+
+            return {"detail": "Successfully unmatched intern from supervisor"}

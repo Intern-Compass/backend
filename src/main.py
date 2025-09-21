@@ -13,6 +13,8 @@ from .routers.auth_router import router as auth_router
 from .routers.skill_router import router as skill_router
 from .routers.intern_router import router as intern_router
 from .routers.project_router import router as project_router
+from .routers.matching_router import router as matching_router
+from .routers.admin_router import router as admin_router
 
 from .logger import logger
 from .utils import limiter
@@ -67,7 +69,9 @@ async def greet(request: Request, response: Response):
 
 
 app.include_router(auth_router)
-app.include_router(skill_router)
+app.include_router(admin_router)
 app.include_router(supervisor_router)
 app.include_router(intern_router)
+app.include_router(matching_router)
+app.include_router(skill_router)
 app.include_router(project_router)

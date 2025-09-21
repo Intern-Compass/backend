@@ -15,13 +15,12 @@ from ..schemas.todo_schemas import TodoInModel, TodoOutModel
 from ..services.intern_service import InternService
 from ..services.todo_service import TodoService
 from ..services.task_service import TaskService
-from ..utils import get_intern_user, get_current_user
+from ..utils import get_intern_user, get_current_user, get_supervisor_user
 
 from typing import List
 
 
 router: APIRouter = APIRouter(prefix="/intern", tags=["Intern"])
-
 
 @router.get("/supervisor", tags=["Dashboard"])
 async def get_intern_supervisor(
