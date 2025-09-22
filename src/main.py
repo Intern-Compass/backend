@@ -31,6 +31,13 @@ def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         content={"detail": "Rate limit exceeded"},
     )
 
+@app.exception_handler(Exception)
+async def custom_exception_handler(_: Request, exc: Exception):
+    logger.error(f"{str(exc)}")
+    return JSONResponse(
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An error occured. Check server"},
+    )
 
 ORIGINS = ["http://localhost:3000", "https://intern-compass.vercel.app", "http://localhost:4000"]
 # noinspection PyTypeChecker
@@ -42,7 +49,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.middleware("http")
 async def measure_response_time(request: Request, call_next):
     """Measures the time to process requests and adds it to the response header."""
@@ -53,13 +59,7 @@ async def measure_response_time(request: Request, call_next):
     return response
 
 
-@app.exception_handler(Exception)
-async def custom_exception_handler(_: Request, exc: Exception):
-    logger.error(f"{str(exc)}")
-    return JSONResponse(
-        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An error occured. Check server"},
-    )
+
 
 
 @app.get("/")

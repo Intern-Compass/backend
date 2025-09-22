@@ -1,25 +1,46 @@
-"""Testing the supervisor service class methods"""
-
 from collections import defaultdict, namedtuple
 
 from dotenv import load_dotenv
 from icecream import ic
+import numpy as np
+from sentence_transformers import SentenceTransformer, util
 
 from .common import InternMatchDetail
 from .models.app_models import Intern, Supervisor
 
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 load_dotenv()
 
+def embed_skills(skills: list[str]):
+    if not skills:
+        return np.zeros(model.get_sentence_embedding_dimension())
+    embeddings = model.encode(skills, convert_to_tensor=True)
+    return embeddings.mean(dim=0)  # average embedding of skills
 
-def skills_similarity(intern_skills: list, supervisor_skills: list):
+def ml_similarity(intern_skills: list[str], supervisor_skills: list[str]):
     """
     The core of calculating matches.
-    Checks the percentage similarity of two sets of skills if there are any overlap
     """
+
+    intern_vec = embed_skills(intern_skills)
+    supervisor_vec = embed_skills(supervisor_skills)
+    return util.cos_sim(intern_vec, supervisor_vec).item()
+
+def skills_similarity(intern_skills: list, supervisor_skills: list, method: str = "jaccard"):
     intern_set = set(intern_skills)
     supervisor_set = set(supervisor_skills)
     overlap = len(intern_set & supervisor_set)
-    return overlap / len(intern_set) if intern_set else 0
+
+    if not intern_set or not supervisor_set:
+        return 0
+
+    if method == "intern_ratio":
+        return overlap / len(intern_set)
+    elif method == "supervisor_ratio":
+        return overlap / len(supervisor_set)
+    else:  # default to Jaccard
+        return overlap / len(intern_set | supervisor_set)
 
 def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
     matches_ = defaultdict(list)  # supervisor_id -> list of intern_ids
@@ -28,7 +49,7 @@ def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
         best_supervisor = None
         best_score = -1
         for supervisor in supervisors_list:
-            score = skills_similarity(intern["skills"], supervisor["skills"])
+            score = ml_similarity(intern["skills"], supervisor["skills"])
             if score > best_score:
                 best_score = score
                 best_supervisor = supervisor["id"]
