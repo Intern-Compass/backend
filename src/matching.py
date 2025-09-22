@@ -3,12 +3,11 @@ from collections import defaultdict, namedtuple
 from dotenv import load_dotenv
 from icecream import ic
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 
 from .common import InternMatchDetail
 from .models.app_models import Intern, Supervisor
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
+from .matching_ml_model import model
 
 load_dotenv()
 
