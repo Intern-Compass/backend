@@ -23,7 +23,7 @@ class BasicUserDetails(BaseModel):
     department: DepartmentEnum
     email: Annotated[str, EmailStr]
     phone_number: str
-    skills: str | None = None
+    skills: list[str] | None = None
 
 
 class InternOutModel(UserOutModel):

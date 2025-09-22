@@ -11,6 +11,7 @@ class SupervisorInModel(UserInModel):
 class SupervisorOutModel(UserOutModel):
     supervisor_id: str
     position: str | None
+    intern_count: int | None = None
 
     @classmethod
     def from_supervisor_user(cls, user: User) -> "SupervisorOutModel":
@@ -42,4 +43,5 @@ class SupervisorOutModel(UserOutModel):
             work_location=supervisor.user.work_location,
             supervisor_id=str(supervisor.id),
             position=supervisor.position,
+            intern_count= len(supervisor.interns)
         )

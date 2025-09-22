@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import StrEnum, Enum
 
 
@@ -25,3 +26,6 @@ class UserType(StrEnum):
     SUPERVISOR = "supervisor"
     INTERN = "intern"
     ADMIN = "admin"
+
+InternMatchDetail = namedtuple("InternMatchDetail", ["intern_id", "similarity"])
+

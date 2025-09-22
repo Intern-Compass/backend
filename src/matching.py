@@ -1,9 +1,11 @@
 """Testing the supervisor service class methods"""
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from dotenv import load_dotenv
+from icecream import ic
 
+from .common import InternMatchDetail
 from .models.app_models import Intern, Supervisor
 
 load_dotenv()
@@ -19,7 +21,6 @@ def skills_similarity(intern_skills: list, supervisor_skills: list):
     overlap = len(intern_set & supervisor_set)
     return overlap / len(intern_set) if intern_set else 0
 
-
 def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
     matches_ = defaultdict(list)  # supervisor_id -> list of intern_ids
 
@@ -33,7 +34,7 @@ def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
                 best_supervisor = supervisor["id"]
 
         if best_supervisor is not None:
-            matches_[best_supervisor].append(intern["id"])
+            matches_[best_supervisor].append(InternMatchDetail(intern_id=intern["id"], similarity=best_score))
 
     return dict(matches_)
 
@@ -60,6 +61,8 @@ def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     supervisors_details: list[dict[str, int | str | list[str]]] = [
         {
             "id": str(supervisor.id),
+            "firstname": supervisor.user.firstname,
+            "lastname": supervisor.user.lastname,
             "department": supervisor.user.department.name,
             "skills": [skill.name for skill in supervisor.skills],
         }
@@ -69,6 +72,8 @@ def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     interns_details: list[dict[str, int | str | list[str]]] = [
         {
             "id": str(intern.id),
+            "firstname": intern.user.firstname,
+            "lastname": intern.user.lastname,
             "department": intern.user.department.name,
             "skills": [skill.name for skill in intern.skills],
         }
@@ -76,4 +81,5 @@ def matcher(supervisors: list[Supervisor], interns: list[Intern]):
     ]
 
     matches = run_matching(supervisors_details, interns_details)
+    ic(matches)
     return matches

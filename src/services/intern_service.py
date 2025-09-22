@@ -64,9 +64,7 @@ class InternService:
                 department=DepartmentEnum(intern.supervisor.user.department_id),
                 email=intern.supervisor.user.email,
                 phone_number=intern.supervisor.user.phone_number,
-                skills=", ".join(
-                    [skill.name for skill in intern.supervisor.user.skills]
-                ),
+                skills= [skill.name for skill in intern.supervisor.user.skills]
             )
 
     async def get_intern_tasks(self, user_id: uuid.UUID) -> list[TaskOutModel]:

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -16,6 +16,8 @@ from ..repositories.intern_repo import InternRepository
 from ..repositories.supervisor_repo import SupervisorRepository
 from ..schemas.intern_schemas import BasicUserDetails, InternOutModel
 
+if TYPE_CHECKING:
+    from ..common import InternMatchDetail
 
 class MatchingService:
     def __init__(
@@ -30,39 +32,23 @@ class MatchingService:
 
     async def display_matches(self):
         async with self.session.begin():
-            supervisors_from_db: list[
-                Supervisor
-            ] = await self.supervisor_repo.get_supervisors_details(conn=self.session)
-            unmatched_interns_from_db: list[
-                Intern
-            ] = await self.intern_repo.get_unmatched_interns(conn=self.session)
+            supervisors_from_db: list[Supervisor] = \
+                await self.supervisor_repo.get_supervisors_details(conn=self.session)
+
+            unmatched_interns_from_db: list[Intern] = \
+                await self.intern_repo.get_unmatched_interns(conn=self.session)
+
+            supervisor_map = {str(s.id): s for s in supervisors_from_db}
+            intern_map = {str(i.id): i for i in unmatched_interns_from_db}
 
             match_details: dict[
-                str, list[tuple[BasicUserDetails, list[BasicUserDetails]]]
+                str, list[tuple[BasicUserDetails, list[dict]]]
             ] = defaultdict(list)
 
             matches: dict = matcher(supervisors_from_db, unmatched_interns_from_db)
 
-            supervisor_ids: set[str] = set()
-            intern_ids: set[str] = set()
-
-            for department, department_match in matches.items():
-                for supervisor_id, intern_id_list in department_match.items():
-                    supervisor_ids.add(supervisor_id)
-                    intern_ids.update(intern_id_list)
-
-            supervisors = await self.supervisor_repo.get_supervisors_by_ids(
-                conn=self.session, ids=list(supervisor_ids)
-            )
-            supervisor_map = {str(s.id): s for s in supervisors}
-
-            interns = await self.intern_repo.get_interns_by_ids(
-                conn=self.session, ids=list(intern_ids)
-            )
-            intern_map = {str(i.id): i for i in interns}
-
-            for department, department_match in matches.items():
-                for supervisor_id, intern_id_list in department_match.items():
+            for department, department_matches in matches.items():
+                for supervisor_id, intern_matches in department_matches.items():
                     supervisor_details = supervisor_map[supervisor_id]
 
                     formatted_supervisor: BasicUserDetails = BasicUserDetails(
@@ -71,26 +57,23 @@ class MatchingService:
                         department=DepartmentEnum(supervisor_details.user.department_id),
                         email=supervisor_details.user.email,
                         phone_number=supervisor_details.user.phone_number,
-                        skills=", ".join(
-                            [skill.name for skill in supervisor_details.user.skills]
-                        ),
+                        skills= [skill.name for skill in supervisor_details.user.skills]
                     )
 
-                    formatted_intern_list: list[BasicUserDetails] = [
-                        BasicUserDetails(
-                            firstname=intern_map[intern_id].user.firstname,
-                            lastname=intern_map[intern_id].user.lastname,
-                            department=DepartmentEnum(intern_map[intern_id].user.department_id),
-                            email=intern_map[intern_id].user.email,
-                            phone_number=intern_map[intern_id].user.phone_number,
-                            skills=", ".join(
-                                [
-                                    skill.name
-                                    for skill in intern_map[intern_id].user.skills
-                                ]
-                            ),
-                        )
-                        for intern_id in intern_id_list
+                    formatted_intern_list: list[dict] = [
+                        {
+                            "firstname": intern_map[intern.intern_id].user.firstname,
+                            "lastname": intern_map[intern.intern_id].user.lastname,
+                            "department": DepartmentEnum(intern_map[intern.intern_id].user.department_id),
+                            "email": intern_map[intern.intern_id].user.email,
+                            "phone_number": intern_map[intern.intern_id].user.phone_number,
+                            "skills": [
+                                        skill.name
+                                        for skill in intern_map[intern.intern_id].user.skills
+                                    ],
+                            "similarity": f"{(intern.similarity * 100):.2f}%"
+                        }
+                        for intern in intern_matches # type: InternMatchDetail
                     ]
 
                     match_details[department].append(
@@ -113,16 +96,16 @@ class MatchingService:
             for department, department_match in matches.items():
                 logger.info(f"Matching for department: {department}")
 
-                for supervisor_id, intern_list in department_match.items():
-                    for intern_id in intern_list:
+                for supervisor_id, intern_matches in department_match.items():
+                    for intern in intern_matches: # type: InternMatchDetail
                         try:
                             await self.intern_repo.assign_supervisor_to_intern(
                                 conn=self.session,
                                 supervisor_id=UUID(supervisor_id),
-                                intern_id=UUID(intern_id),
+                                intern_id=UUID(intern.intern_id),
                             )
                         except ValueError:
-                            logger.info(f"Inern {intern_id} does not exist")
+                            logger.info(f"Intern {intern.intern_id} does not exist")
                             continue
 
         return {"detail": "Matching performed successfully"}
