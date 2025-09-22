@@ -117,6 +117,10 @@ class MatchingService:
                 intern_id=intern_id
             )
 
+            supervisor: Supervisor = await self.supervisor_repo.get_supervisor_details(
+                conn=self.session,
+                supervisor_id=supervisor_id
+            )
             if not intern:
                 raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Intern not found")
 
@@ -131,6 +135,13 @@ class MatchingService:
                     status_code=HTTP_400_BAD_REQUEST,
                     detail="Intern has already been matched to a supervisor. "
                            "Unmatch the existing supervisor before matching a new one"
+                )
+
+            if supervisor.user.department_id != intern.user.department_id:
+                raise HTTPException(
+                    status_code=HTTP_400_BAD_REQUEST,
+                    detail= "This intern and supervisor are not in the same department. "
+                            "This match is not supposed to happen"
                 )
 
             assigned_interns: list[Intern] =  await self.supervisor_repo.assign_interns_to_supervisor(
