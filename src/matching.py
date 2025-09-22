@@ -7,23 +7,26 @@ from sentence_transformers import util
 
 from .common import InternMatchDetail
 from .models.app_models import Intern, Supervisor
-from .matching_ml_model import model
+from .matching_ml_model import get_model
 
 load_dotenv()
 
 def embed_skills(skills: list[str]):
     if not skills:
-        return np.zeros(model.get_sentence_embedding_dimension())
-    embeddings = model.encode(skills, convert_to_tensor=True)
+        return np.zeros(get_model().get_sentence_embedding_dimension())
+    embeddings = get_model().encode(skills, convert_to_tensor=True)
     return embeddings.mean(dim=0)  # average embedding of skills
 
-def ml_similarity(intern_skills: list[str], supervisor_skills: list[str]):
+def ml_similarity(
+        # intern_skills: list[str], supervisor_skills: list[str],
+        intern_vec: np.ndarray = None, supervisor_vec: np.ndarray = None
+):
     """
     The core of calculating matches.
     """
 
-    intern_vec = embed_skills(intern_skills)
-    supervisor_vec = embed_skills(supervisor_skills)
+    # intern_vec = embed_skills(intern_skills)
+    # supervisor_vec = embed_skills(supervisor_skills)
     return util.cos_sim(intern_vec, supervisor_vec).item()
 
 def skills_similarity(intern_skills: list, supervisor_skills: list, method: str = "jaccard"):
@@ -43,12 +46,23 @@ def skills_similarity(intern_skills: list, supervisor_skills: list, method: str 
 
 def match_interns_to_supervisors(supervisors_list: list, interns_list: list):
     matches_ = defaultdict(list)  # supervisor_id -> list of intern_ids
+    supervisor_skill_embedding_dict = {
+        supervisor["id"]: embed_skills(supervisor["skills"])
+        for supervisor in supervisors_list
+    }
+    intern_skill_embedding_dict = {
+        intern["id"]: embed_skills(intern["skills"])
+        for intern in interns_list
+    }
 
     for intern in interns_list:
         best_supervisor = None
         best_score = -1
         for supervisor in supervisors_list:
-            score = ml_similarity(intern["skills"], supervisor["skills"])
+            score = ml_similarity(
+                intern_skill_embedding_dict[intern["id"]],
+                supervisor_skill_embedding_dict[supervisor["id"]]
+            )
             if score > best_score:
                 best_score = score
                 best_supervisor = supervisor["id"]
