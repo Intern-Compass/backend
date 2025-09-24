@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int
     SMTP_PASSWORD: str
 
+    USE_ML_MATCHING: bool
     RATE_LIMIT_ENABLED: bool
 
     model_config = SettingsConfigDict(
