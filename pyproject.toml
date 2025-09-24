@@ -25,7 +25,6 @@ dependencies = [
     "abs2rel>=1.1.0",
     "icecream>=2.1.7",
     "slowapi>=0.1.9",
-    "sentence-transformers>=5.1.0",
 ]
 
 [dependency-groups]
