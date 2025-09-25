@@ -67,10 +67,15 @@ class InternRepository:
         return result.scalar_one_or_none()
 
     async def get_interns(self, conn):
-        stmt: Select = select(self.table).options(
+        stmt: Select = (
+            select(self.table)
+            .join(Intern.user)
+            .where(User.verified)
+            .options(
             selectinload(Intern.user),
-            selectinload(Intern.user).selectinload(User.skills),
-            selectinload(Intern.user).selectinload(User.department),
+                selectinload(Intern.user).selectinload(User.skills),
+                selectinload(Intern.user).selectinload(User.department),
+            )
         )
         result: Result = await conn.execute(stmt)
 
